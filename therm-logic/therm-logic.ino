@@ -1,6 +1,6 @@
-#define FAN_PIN 10
-#define AC_PIN 11
-#define HEATER_PIN 12
+#define FAN_PIN 4
+#define AC_PIN 3
+#define HEATER_PIN 2
 
 enum Thermostat_state_name { HEAT, COOL, FAN, THERM_OFF };
 enum Power_state { OFF, ON };
@@ -25,15 +25,16 @@ void loop() {
       if (ac_on()) {
         turn_ac(OFF);
       }
-      
+      if (fan_on()) {
+        turn_fan(OFF);
+      }
+
       // Turn heater on
       if (!heater_on() && current_temp < target - bound) {
-        turn_fan(ON);
         turn_heater(ON);
       } 
       // Turn heater off
       else if (heater_on() && current_temp > target + bound) {
-        turn_fan(OFF);
         turn_heater(OFF);
       }
       break;
@@ -51,16 +52,21 @@ void loop() {
       else if (ac_on() && current_temp < target - bound) {
         turn_fan(OFF);
         turn_ac(OFF);
+      } else {
+        if(fan_on()) {
+          turn_fan(OFF);  
+        }
       }
       break;
     case FAN :
-      turn_fan(ON);
-      
       if (heater_on()) {
         turn_heater(OFF);
       }
       if (ac_on()) {
         turn_ac(OFF);
+      }
+      if(!fan_on()) {
+        turn_fan(ON);
       }
       break;
     case THERM_OFF :
