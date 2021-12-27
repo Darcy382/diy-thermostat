@@ -1,11 +1,4 @@
-/*
-* Arduino Wireless Communication Tutorial
-*       Example 1 - Receiver Code
-*                
-* by Dejan Nedelkovski, www.HowToMechatronics.com
-* 
-* Library: TMRh20/RF24, https://github.com/tmrh20/RF24/
-*/
+
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -20,19 +13,26 @@ uint64_t address[6] = {
   0xB3B4B5B60FLL,
   0xB3B4B5B605LL
 };
-float data[3];
+
+struct PayloadStruct {
+  char nodeID;
+  float tempurature;
+  float humidity;
+  float heat_idx;
+};
+PayloadStruct payload;
 
 void setup() {
   Serial.begin(9600);
   radio.begin();
   radio.openReadingPipe(0, address[0]);
   radio.openReadingPipe(1, address[1]);
-  radio.setPALevel(RF24_PA_MIN);
+  radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
 }
 void loop() {
   if (radio.available()) {
-    radio.read(&data, sizeof(data));
+    radio.read(&payload, sizeof(payload));
 //    Serial.print("Temp: ");
 //    Serial.print(data[0]);
 //    Serial.write(0xC2);  //send degree symbol
@@ -46,6 +46,10 @@ void loop() {
 //    Serial.write(0xC2);  //send degree symbol
 //    Serial.write(0xB0);  //send degree symbol
 //    Serial.println("F   ");
-      Serial.println(data[0]);
+
+      Serial.print("Node ID ");
+      Serial.print((int) payload.nodeID);
+      Serial.print(" Data: ");
+      Serial.println(payload.tempurature);
   }
 }
