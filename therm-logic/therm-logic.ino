@@ -1,27 +1,88 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
 #define FAN_PIN 4
 #define AC_PIN 3
 #define HEATER_PIN 2
+#define ERROR_LIGHT 5
 
 enum Thermostat_state_name { HEAT, COOL, FAN, THERM_OFF };
 enum Power_state { OFF, ON };
 const float bound = 1;
 
-int thermostat_state = THERM_OFF;
+RF24 radio(7, 8); // CE, CSN
+
+uint64_t address[6] = {
+  0x7878787878LL,
+  0xB3B4B5B6F1LL,
+  0xB3B4B5B6CDLL,
+  0xB3B4B5B6A3LL,
+  0xB3B4B5B60FLL,
+  0xB3B4B5B605LL
+};
+
+struct PayloadStruct {
+  char nodeID;
+  float tempurature;
+  float humidity;
+  float heat_idx;
+};
+PayloadStruct payload;
+
+
+int thermostat_state;
 float target;
 float current_temp;
 
-void setup() {
+void setup() {  
   Serial.begin(9600);
-  thermostat_state = OFF;
+  
+  thermostat_state = COOL;
   target = 72;
+
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(AC_PIN, OUTPUT);
+  pinMode(HEATER_PIN, OUTPUT);
+  pinMode(ERROR_LIGHT, OUTPUT);
+  
+  radio.begin();
+  radio.openReadingPipe(0, address[0]);
+  radio.openReadingPipe(1, address[1]);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.startListening();
 }
 
 void loop() {
-  current_temp = 72;
+  float temp0 = NULL;
+  float temp1 = NULL;
 
-  // TODO: Turn the fan off when fan mode exited
+  while (temp0 == NULL || temp1 == NULL) {
+    if (radio.available()) {
+      digitalWrite(ERROR_LIGHT, LOW);
+      radio.read(&payload, sizeof(payload));
+      if (payload.nodeID == 0) {
+        temp0 = payload.tempurature;
+      } else if (payload.nodeID == 1) {
+        temp1 = payload.tempurature;
+      } else {
+        Serial.print("ERROR: Invalid Node ID = ");
+        Serial.println(payload.nodeID);
+      }
+    }
+    else {
+      digitalWrite(ERROR_LIGHT, HIGH);
+    }
+  }
+
+  current_temp = (temp0 + temp1) / 2;
+  Serial.print("Average temp: ");
+  Serial.println(current_temp);
+
+  // TODO: Turn the fan off when fan mode exited?
   switch(thermostat_state) {
     case HEAT :
+      Serial.println("Heating Mode");
       if (ac_on()) {
         turn_ac(OFF);
       }
@@ -39,6 +100,7 @@ void loop() {
       }
       break;
     case COOL :
+      Serial.println("Cooling Mode");
       if (heater_on()) {
         turn_heater(OFF);
       }
@@ -52,13 +114,10 @@ void loop() {
       else if (ac_on() && current_temp < target - bound) {
         turn_fan(OFF);
         turn_ac(OFF);
-      } else {
-        if(fan_on()) {
-          turn_fan(OFF);  
-        }
       }
       break;
     case FAN :
+      Serial.println("Fan Mode");
       if (heater_on()) {
         turn_heater(OFF);
       }
@@ -70,6 +129,7 @@ void loop() {
       }
       break;
     case THERM_OFF :
+      Serial.println("Thermostat off");
       if (fan_on()) {
         turn_fan(OFF);
       }
@@ -88,6 +148,8 @@ void loop() {
 }
 
 void turn_fan(Power_state power_state) {
+  Serial.print("Fan turning: ");
+  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(FAN_PIN, HIGH);
   } else if (power_state == OFF) {
@@ -98,6 +160,8 @@ void turn_fan(Power_state power_state) {
 }
 
 void turn_heater(Power_state power_state) {
+  Serial.print("Heater turning: ");
+  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(HEATER_PIN, HIGH);
   } else if (power_state == OFF) {
@@ -108,6 +172,8 @@ void turn_heater(Power_state power_state) {
 }
 
 void turn_ac(Power_state power_state) {
+  Serial.print("AC turning: ");
+  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(AC_PIN, HIGH);
   } else if (power_state == OFF) {
