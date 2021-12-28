@@ -5,7 +5,11 @@
 #define FAN_PIN 4
 #define AC_PIN 3
 #define HEATER_PIN 2
-#define ERROR_LIGHT 5
+#define COMMUNICATION_LIGHT 5
+
+#define HEAT_MODE_LIGHT 6
+#define COOL_MODE_LIGHT 9
+#define FAN_MODE_LIGHT 10
 
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
@@ -45,7 +49,10 @@ void setup() {
   pinMode(FAN_PIN, OUTPUT);
   pinMode(AC_PIN, OUTPUT);
   pinMode(HEATER_PIN, OUTPUT);
-  pinMode(ERROR_LIGHT, OUTPUT);
+  pinMode(COMMUNICATION_LIGHT, OUTPUT);
+  pinMode(HEAT_MODE_LIGHT, OUTPUT);
+  pinMode(COOL_MODE_LIGHT, OUTPUT);
+  pinMode(FAN_MODE_LIGHT, OUTPUT);
   
   radio.begin();
   radio.openReadingPipe(0, address[0]);
@@ -63,9 +70,9 @@ void loop() {
     int input = Serial.parseInt();
     if (input == 0 || input == 1 || input == 2 || input == 3) {
       thermostat_state = input;
-      digitalWrite(ERROR_LIGHT, HIGH);
+      digitalWrite(COMMUNICATION_LIGHT, HIGH);
       delay(1000);
-      digitalWrite(ERROR_LIGHT, LOW);
+      digitalWrite(COMMUNICATION_LIGHT, LOW);
     }
     Serial.println(thermostat_state);
   }
@@ -74,7 +81,7 @@ void loop() {
   // Recieving tempuratures from all sensors
   while (temp0 == NULL || temp1 == NULL) {
     if (radio.available()) {
-//      digitalWrite(ERROR_LIGHT, LOW);
+//      digitalWrite(COMMUNICATION_LIGHT, LOW);
       radio.read(&payload, sizeof(payload));
       if (payload.nodeID == 0) {
         temp0 = payload.tempurature;
@@ -86,7 +93,7 @@ void loop() {
       }
     }
     else {
-//      digitalWrite(ERROR_LIGHT, HIGH);
+//      digitalWrite(COMMUNICATION_LIGHT, HIGH);
     }
   }
 
@@ -99,6 +106,9 @@ void loop() {
   // TODO: Turn the fan off when fan mode exited?
   switch(thermostat_state) {
     case HEAT :
+      digitalWrite(HEAT_MODE_LIGHT, HIGH);
+      digitalWrite(COOL_MODE_LIGHT, LOW);
+      digitalWrite(FAN_MODE_LIGHT, LOW);
 //      Serial.println("Heating Mode");
       if (ac_on()) {
         turn_ac(OFF);
@@ -116,7 +126,10 @@ void loop() {
         turn_heater(OFF);
       }
       break;
-    case 2 :
+    case COOL:
+      digitalWrite(HEAT_MODE_LIGHT, LOW);
+      digitalWrite(COOL_MODE_LIGHT, HIGH);
+      digitalWrite(FAN_MODE_LIGHT, LOW);
 //      Serial.println("Cooling Mode");
       if (heater_on()) {
         turn_heater(OFF);
@@ -134,6 +147,9 @@ void loop() {
       }
       break;
     case FAN :
+      digitalWrite(HEAT_MODE_LIGHT, LOW);
+      digitalWrite(COOL_MODE_LIGHT, LOW);
+      digitalWrite(FAN_MODE_LIGHT, HIGH);
 //      Serial.println("Fan Mode");
       if (heater_on()) {
         turn_heater(OFF);
@@ -146,6 +162,9 @@ void loop() {
       }
       break;
     case THERM_OFF :
+      digitalWrite(HEAT_MODE_LIGHT, LOW);
+      digitalWrite(COOL_MODE_LIGHT, LOW);
+      digitalWrite(FAN_MODE_LIGHT, LOW);
 //      Serial.println("Thermostat off");
       if (fan_on()) {
         turn_fan(OFF);
