@@ -6,7 +6,7 @@
 #define AC_PIN 3
 #define HEATER_PIN 2
 #define COMMUNICATION_LIGHT 5
-
+#define RADIO_LIGHT 14
 #define HEAT_MODE_LIGHT 6
 #define COOL_MODE_LIGHT 9
 #define FAN_MODE_LIGHT 10
@@ -50,6 +50,7 @@ void setup() {
   pinMode(AC_PIN, OUTPUT);
   pinMode(HEATER_PIN, OUTPUT);
   pinMode(COMMUNICATION_LIGHT, OUTPUT);
+  pinMode(RADIO_LIGHT, OUTPUT);
   pinMode(HEAT_MODE_LIGHT, OUTPUT);
   pinMode(COOL_MODE_LIGHT, OUTPUT);
   pinMode(FAN_MODE_LIGHT, OUTPUT);
@@ -77,7 +78,7 @@ void loop() {
     Serial.println(thermostat_state);
   }
 
-  
+  digitalWrite(RADIO_LIGHT, HIGH);
   // Recieving tempuratures from all sensors
   while (temp0 == NULL || temp1 == NULL) {
     if (radio.available()) {
@@ -96,6 +97,7 @@ void loop() {
 //      digitalWrite(COMMUNICATION_LIGHT, HIGH);
     }
   }
+  digitalWrite(RADIO_LIGHT, LOW);
 
   
   current_temp = (temp0 + temp1) / 2;
