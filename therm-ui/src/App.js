@@ -1,13 +1,15 @@
 import logo from './logo.svg';
 import './App.css';
 import React from 'react';
+import Button from 'react-bootstrap/Button';
+import Card from 'react-bootstrap/Card';
 
 class App extends React.Component {
   state = { temp: null, isLoading: true, error: null };
 
   async componentDidMount() {
     try {
-      const response = await fetch('http://192.168.1.32:5000/temp');
+      const response = await fetch('http://192.168.1.32:5000/tempurature');
       const data = await response.json();
       this.setState({ temp: data.temp, isLoading: false });
 
@@ -33,21 +35,20 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Current temperature is: {this.renderTemp()}.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+      <div className='layout'>
+        <div className='main'>
+          <Card>
+          <Card.Body>
+            <Card.Title>Sensor Data:</Card.Title>
+            <Card.Text>
+              <p>Sensor 1 temperature: null</p>
+              <p>Sensor 2 temperature: null</p>
+              <p>Average temperature: null</p>
+            </Card.Text>
+            <Button variant="primary">Refresh</Button>
+          </Card.Body>
+        </Card>
+        </div>
       </div>
     );
   }

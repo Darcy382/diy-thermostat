@@ -7,7 +7,7 @@
 #define HEATER_PIN 2
 #define ERROR_LIGHT 5
 
-enum Thermostat_state_name { HEAT, COOL, FAN, THERM_OFF };
+enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
 const float bound = 1;
 
@@ -34,11 +34,12 @@ PayloadStruct payload;
 int thermostat_state;
 float target;
 float current_temp;
-
+float temp0;
+float temp1;
 void setup() {  
   Serial.begin(9600);
   
-  thermostat_state = COOL;
+  thermostat_state = THERM_OFF;
   target = 72;
 
   pinMode(FAN_PIN, OUTPUT);
@@ -54,35 +55,51 @@ void setup() {
 }
 
 void loop() {
-  float temp0 = NULL;
-  float temp1 = NULL;
+  temp0 = NULL;
+  temp1 = NULL;
 
+  // Checking for computer input
+  if (Serial.available() != 0) {
+    int input = Serial.parseInt();
+    if (input == 0 || input == 1 || input == 2 || input == 3) {
+      thermostat_state = input;
+      digitalWrite(ERROR_LIGHT, HIGH);
+      delay(1000);
+      digitalWrite(ERROR_LIGHT, LOW);
+    }
+    Serial.println(thermostat_state);
+  }
+
+  
+  // Recieving tempuratures from all sensors
   while (temp0 == NULL || temp1 == NULL) {
     if (radio.available()) {
-      digitalWrite(ERROR_LIGHT, LOW);
+//      digitalWrite(ERROR_LIGHT, LOW);
       radio.read(&payload, sizeof(payload));
       if (payload.nodeID == 0) {
         temp0 = payload.tempurature;
       } else if (payload.nodeID == 1) {
         temp1 = payload.tempurature;
       } else {
-        Serial.print("ERROR: Invalid Node ID = ");
-        Serial.println(payload.nodeID);
+//        Serial.print("ERROR: Invalid Node ID = ");
+//        Serial.println(payload.nodeID);
       }
     }
     else {
-      digitalWrite(ERROR_LIGHT, HIGH);
+//      digitalWrite(ERROR_LIGHT, HIGH);
     }
   }
 
+  
   current_temp = (temp0 + temp1) / 2;
-  Serial.print("Average temp: ");
-  Serial.println(current_temp);
+//  Serial.print("Average temp: ");
+//  Serial.println(current_temp);
 
+  // Starting classical thermostat logic
   // TODO: Turn the fan off when fan mode exited?
   switch(thermostat_state) {
     case HEAT :
-      Serial.println("Heating Mode");
+//      Serial.println("Heating Mode");
       if (ac_on()) {
         turn_ac(OFF);
       }
@@ -99,8 +116,8 @@ void loop() {
         turn_heater(OFF);
       }
       break;
-    case COOL :
-      Serial.println("Cooling Mode");
+    case 2 :
+//      Serial.println("Cooling Mode");
       if (heater_on()) {
         turn_heater(OFF);
       }
@@ -117,7 +134,7 @@ void loop() {
       }
       break;
     case FAN :
-      Serial.println("Fan Mode");
+//      Serial.println("Fan Mode");
       if (heater_on()) {
         turn_heater(OFF);
       }
@@ -129,7 +146,7 @@ void loop() {
       }
       break;
     case THERM_OFF :
-      Serial.println("Thermostat off");
+//      Serial.println("Thermostat off");
       if (fan_on()) {
         turn_fan(OFF);
       }
@@ -141,45 +158,46 @@ void loop() {
       }
       break;
     default :
-      Serial.print("ERROR: Invalid state.  state = ");
-      Serial.println(thermostat_state);
+      break;
+//      Serial.print("ERROR: Invalid state.  state = ");
+//      Serial.println(thermostat_state);
   }
   delay(1000);
 }
 
 void turn_fan(Power_state power_state) {
-  Serial.print("Fan turning: ");
-  Serial.println(power_state);
+//  Serial.print("Fan turning: ");
+//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(FAN_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(FAN_PIN, LOW);
   } else {
-    Serial.println("Invalid power state");
+//    Serial.println("Invalid power state");
   }
 }
 
 void turn_heater(Power_state power_state) {
-  Serial.print("Heater turning: ");
-  Serial.println(power_state);
+//  Serial.print("Heater turning: ");
+//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(HEATER_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(HEATER_PIN, LOW);
   } else {
-    Serial.println("Invalid power state");
+//    Serial.println("Invalid power state");
   }
 }
 
 void turn_ac(Power_state power_state) {
-  Serial.print("AC turning: ");
-  Serial.println(power_state);
+//  Serial.print("AC turning: ");
+//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(AC_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(AC_PIN, LOW);
   } else {
-    Serial.println("Invalid power state");
+//    Serial.println("Invalid power state");
   }
 }
 
