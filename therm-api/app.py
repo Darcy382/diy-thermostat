@@ -32,7 +32,8 @@ def get_current_temp():
 @app.route('/thermostat/mode', methods = ['GET'])
 def set_therm_mode():
     arduino.flushInput()
-    arduino.write(4)
+    arduino.flushOutput()
+    arduino.write('5'.encode('utf-8'))
     while arduino.in_waiting == 0:
         pass
     mode = int(arduino.readline())
