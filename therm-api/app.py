@@ -11,23 +11,23 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 arduino = serial.Serial(port='/dev/cu.usbmodem101', baudrate=9600, timeout=.1)
 
-def read_current_temp():
-    arduino.flushInput()
-    value = b''
-    while value == b'':
-        time.sleep(0.05)
-        value = arduino.readline()
-    return float(value)
+# def read_current_temp():
+#     arduino.flushInput()
+#     value = b''
+#     while value == b'':
+#         time.sleep(0.05)
+#         value = arduino.readline()
+#     return float(value)
 
 
-@app.route('/temperature')
-def get_current_temp():
-    data = json.dumps({'temp': str(read_current_temp())})
-    # data = json.dumps({'temp': 20})
-    return app.response_class(
-        data,
-        mimetype='applications/json'
-    )
+# @app.route('/temperature')
+# def get_current_temp():
+#     data = json.dumps({'temp': str(read_current_temp())})
+#     # data = json.dumps({'temp': 20})
+#     return app.response_class(
+#         data,
+#         mimetype='applications/json'
+#     )
 
 @app.route('/thermostat/mode', methods = ['GET'])
 def set_therm_mode():
@@ -37,9 +37,8 @@ def set_therm_mode():
     while arduino.in_waiting == 0:
         pass
     mode = int(arduino.readline())
-    data = json.dumps({'mode': mode})
     return app.response_class(
-        data,
+        json.dumps({'mode': mode}),
         mimetype='applications/json'
     )
     
@@ -52,9 +51,8 @@ def get_therm_mode():
     while arduino.in_waiting == 0:
         pass
     mode = int(arduino.readline())
-    data = json.dumps({'mode': mode})
     return app.response_class(
-        data,
+        json.dumps({'mode': mode}),
         mimetype='applications/json'
     )
 
