@@ -9,7 +9,7 @@ CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-arduino = serial.Serial(port='/dev/cu.usbmodem101', baudrate=9600, timeout=.1)
+arduino = serial.Serial(port='/dev/cu.usbmodem2101', baudrate=9600, timeout=.1)
 
 # def read_current_temp():
 #     arduino.flushInput()
