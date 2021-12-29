@@ -60,9 +60,9 @@ void setup() {
   pinMode(FAN_MODE_LIGHT, OUTPUT);
   
   radio.begin();
-  //  TODO: update this to use list
-  radio.openReadingPipe(0, address[0]);
-  radio.openReadingPipe(1, address[1]);
+  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+    radio.openReadingPipe(i, address[i]);
+  }
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
 }
@@ -72,6 +72,7 @@ void loop() {
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
     tempuratures[i] = NULL;
   }
+
   
   // Recieving tempuratures from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
@@ -95,9 +96,11 @@ void loop() {
     }
   }
   digitalWrite(RADIO_LIGHT, LOW);
+  
   // Checking for computer input
   if (Serial.available() != 0) {
     digitalWrite(COMMUNICATION_LIGHT, HIGH);
+    // Deserializing computer json input
     String input = Serial.readString();
     DeserializationError error = deserializeJson(doc, input);
     if (error) {
@@ -106,11 +109,14 @@ void loop() {
       // Serial.println(error.f_str());
       return;
     }
-    thermostat_state = doc["mode"];
+
+    JsonVariant mode = doc["mode"];
+    if (!mode.isNull()) {
+      thermostat_state = doc["mode"];
+    }
     doc.clear();
-//    if (input == 0 || input == 1 || input == 2 || input == 3) {
-//      thermostat_state = input;
-//    }
+
+    // Serializing data for json output
     doc["mode"] = thermostat_state;
     JsonArray tempuraturesJson = doc.createNestedArray("tempuraturesJson");
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
