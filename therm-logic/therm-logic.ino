@@ -40,6 +40,7 @@ float target;
 float current_temp;
 float temp0;
 float temp1;
+
 void setup() {  
   Serial.begin(9600);
   
@@ -68,50 +69,40 @@ void loop() {
 
   // Checking for computer input
   if (Serial.available() != 0) {
+    digitalWrite(COMMUNICATION_LIGHT, HIGH);
     int input = Serial.parseInt();
     if (input == 0 || input == 1 || input == 2 || input == 3) {
       thermostat_state = input;
-      digitalWrite(COMMUNICATION_LIGHT, HIGH);
-      delay(1000);
-      digitalWrite(COMMUNICATION_LIGHT, LOW);
     }
     Serial.println(thermostat_state);
+    digitalWrite(COMMUNICATION_LIGHT, LOW);
   }
 
-  digitalWrite(RADIO_LIGHT, HIGH);
   // Recieving tempuratures from all sensors
+  digitalWrite(RADIO_LIGHT, HIGH);
   while (temp0 == NULL || temp1 == NULL) {
     if (radio.available()) {
-//      digitalWrite(COMMUNICATION_LIGHT, LOW);
       radio.read(&payload, sizeof(payload));
       if (payload.nodeID == 0) {
         temp0 = payload.tempurature;
       } else if (payload.nodeID == 1) {
         temp1 = payload.tempurature;
       } else {
-//        Serial.print("ERROR: Invalid Node ID = ");
-//        Serial.println(payload.nodeID);
+        // TODO: Turn on the error light
+        // An invalid nodeID has been recived
       }
-    }
-    else {
-//      digitalWrite(COMMUNICATION_LIGHT, HIGH);
     }
   }
   digitalWrite(RADIO_LIGHT, LOW);
 
-  
-  current_temp = (temp0 + temp1) / 2;
-//  Serial.print("Average temp: ");
-//  Serial.println(current_temp);
-
   // Starting classical thermostat logic
-  // TODO: Turn the fan off when fan mode exited?
+  current_temp = (temp0 + temp1) / 2; 
   switch(thermostat_state) {
     case HEAT :
       digitalWrite(HEAT_MODE_LIGHT, HIGH);
       digitalWrite(COOL_MODE_LIGHT, LOW);
       digitalWrite(FAN_MODE_LIGHT, LOW);
-//      Serial.println("Heating Mode");
+      
       if (ac_on()) {
         turn_ac(OFF);
       }
@@ -119,30 +110,27 @@ void loop() {
         turn_fan(OFF);
       }
 
-      // Turn heater on
       if (!heater_on() && current_temp < target - bound) {
         turn_heater(ON);
-      } 
-      // Turn heater off
+      }
       else if (heater_on() && current_temp > target + bound) {
         turn_heater(OFF);
       }
       break;
     case COOL:
+      // TODO: Turn the fan off when fan mode exited?
       digitalWrite(HEAT_MODE_LIGHT, LOW);
       digitalWrite(COOL_MODE_LIGHT, HIGH);
       digitalWrite(FAN_MODE_LIGHT, LOW);
-//      Serial.println("Cooling Mode");
+
       if (heater_on()) {
         turn_heater(OFF);
       }
 
-      // Turn ac on
       if (!ac_on() && current_temp > target + bound) {
         turn_fan(ON);
         turn_ac(ON);
       }
-      // Turn ac off
       else if (ac_on() && current_temp < target - bound) {
         turn_fan(OFF);
         turn_ac(OFF);
@@ -152,13 +140,14 @@ void loop() {
       digitalWrite(HEAT_MODE_LIGHT, LOW);
       digitalWrite(COOL_MODE_LIGHT, LOW);
       digitalWrite(FAN_MODE_LIGHT, HIGH);
-//      Serial.println("Fan Mode");
+      
       if (heater_on()) {
         turn_heater(OFF);
       }
       if (ac_on()) {
         turn_ac(OFF);
       }
+      
       if(!fan_on()) {
         turn_fan(ON);
       }
@@ -167,7 +156,7 @@ void loop() {
       digitalWrite(HEAT_MODE_LIGHT, LOW);
       digitalWrite(COOL_MODE_LIGHT, LOW);
       digitalWrite(FAN_MODE_LIGHT, LOW);
-//      Serial.println("Thermostat off");
+
       if (fan_on()) {
         turn_fan(OFF);
       }
@@ -179,46 +168,43 @@ void loop() {
       }
       break;
     default :
+      // Turn on the error light
+      // The Thermostat is in an invalid state
       break;
-//      Serial.print("ERROR: Invalid state.  state = ");
-//      Serial.println(thermostat_state);
   }
   delay(1000);
 }
 
 void turn_fan(Power_state power_state) {
-//  Serial.print("Fan turning: ");
-//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(FAN_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(FAN_PIN, LOW);
   } else {
-//    Serial.println("Invalid power state");
+    // Turn on error light
+    // Invalid power state
   }
 }
 
 void turn_heater(Power_state power_state) {
-//  Serial.print("Heater turning: ");
-//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(HEATER_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(HEATER_PIN, LOW);
   } else {
-//    Serial.println("Invalid power state");
+    // Turn on error light
+    // Invalid power state
   }
 }
 
 void turn_ac(Power_state power_state) {
-//  Serial.print("AC turning: ");
-//  Serial.println(power_state);
   if (power_state == ON) {
     digitalWrite(AC_PIN, HIGH);
   } else if (power_state == OFF) {
     digitalWrite(AC_PIN, LOW);
   } else {
-//    Serial.println("Invalid power state");
+    // Turn on error light
+    // Invalid power state
   }
 }
 
