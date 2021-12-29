@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <ArduinoJson.h>
 
 #define FAN_PIN 4
 #define AC_PIN 3
@@ -10,12 +11,14 @@
 #define HEAT_MODE_LIGHT 6
 #define COOL_MODE_LIGHT 9
 #define FAN_MODE_LIGHT 10
+#define NUM_TEMP_SENSORS 2
 
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
-const float bound = 1;
+const float bound = 1; // Convert to define?
 
 RF24 radio(7, 8); // CE, CSN
+StaticJsonDocument<200> doc;
 
 uint64_t address[6] = {
   0x7878787878LL,
@@ -37,11 +40,11 @@ PayloadStruct payload;
 
 int thermostat_state;
 float target;
-float current_temp;
-float temp0;
-float temp1;
+float avg_temp;
+float tempuratures[NUM_TEMP_SENSORS];
+bool received_all_temps;
 
-void setup() {  
+void setup() {
   Serial.begin(9600);
   
   thermostat_state = THERM_OFF;
@@ -57,6 +60,7 @@ void setup() {
   pinMode(FAN_MODE_LIGHT, OUTPUT);
   
   radio.begin();
+  //  TODO: update this to use list
   radio.openReadingPipe(0, address[0]);
   radio.openReadingPipe(1, address[1]);
   radio.setPALevel(RF24_PA_MAX);
@@ -64,39 +68,66 @@ void setup() {
 }
 
 void loop() {
-  temp0 = NULL;
-  temp1 = NULL;
 
-  // Checking for computer input
-  if (Serial.available() != 0) {
-    digitalWrite(COMMUNICATION_LIGHT, HIGH);
-    int input = Serial.parseInt();
-    if (input == 0 || input == 1 || input == 2 || input == 3) {
-      thermostat_state = input;
-    }
-    Serial.println(thermostat_state);
-    digitalWrite(COMMUNICATION_LIGHT, LOW);
+  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+    tempuratures[i] = NULL;
   }
-
+  
   // Recieving tempuratures from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
-  while (temp0 == NULL || temp1 == NULL) {
+  received_all_temps = false;
+  while (!received_all_temps) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
-      if (payload.nodeID == 0) {
-        temp0 = payload.tempurature;
-      } else if (payload.nodeID == 1) {
-        temp1 = payload.tempurature;
+      if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
+        tempuratures[payload.nodeID] = payload.tempurature;
       } else {
         // TODO: Turn on the error light
         // An invalid nodeID has been recived
       }
     }
+
+    received_all_temps = true;
+    for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+      if (tempuratures[i] == NULL) {
+        received_all_temps = false;
+      }
+    }
   }
   digitalWrite(RADIO_LIGHT, LOW);
+  // Checking for computer input
+  if (Serial.available() != 0) {
+    digitalWrite(COMMUNICATION_LIGHT, HIGH);
+    String input = Serial.readString();
+    DeserializationError error = deserializeJson(doc, input);
+    if (error) {
+      // Turn on the Error light
+      // Serial.print(F("deserializeJson() failed: "));
+      // Serial.println(error.f_str());
+      return;
+    }
+    thermostat_state = doc["mode"];
+    doc.clear();
+//    if (input == 0 || input == 1 || input == 2 || input == 3) {
+//      thermostat_state = input;
+//    }
+    doc["mode"] = thermostat_state;
+    JsonArray tempuraturesJson = doc.createNestedArray("tempuraturesJson");
+    for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+      tempuraturesJson.add(tempuratures[i]);  
+    }
+    serializeJson(doc, Serial);
+    digitalWrite(COMMUNICATION_LIGHT, LOW);
+  }
+
+  // Calculating average tempurature
+  float sum = 0;
+  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+    sum += tempuratures[i];
+  }
+  avg_temp = sum / NUM_TEMP_SENSORS;
 
   // Starting classical thermostat logic
-  current_temp = (temp0 + temp1) / 2; 
   switch(thermostat_state) {
     case HEAT :
       digitalWrite(HEAT_MODE_LIGHT, HIGH);
@@ -110,10 +141,10 @@ void loop() {
         turn_fan(OFF);
       }
 
-      if (!heater_on() && current_temp < target - bound) {
+      if (!heater_on() && avg_temp < target - bound) {
         turn_heater(ON);
       }
-      else if (heater_on() && current_temp > target + bound) {
+      else if (heater_on() && avg_temp > target + bound) {
         turn_heater(OFF);
       }
       break;
@@ -127,11 +158,11 @@ void loop() {
         turn_heater(OFF);
       }
 
-      if (!ac_on() && current_temp > target + bound) {
+      if (!ac_on() && avg_temp > target + bound) {
         turn_fan(ON);
         turn_ac(ON);
       }
-      else if (ac_on() && current_temp < target - bound) {
+      else if (ac_on() && avg_temp < target - bound) {
         turn_fan(OFF);
         turn_ac(OFF);
       }

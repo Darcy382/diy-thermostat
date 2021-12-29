@@ -36,9 +36,9 @@ def set_therm_mode():
     arduino.write('5'.encode('utf-8'))
     while arduino.in_waiting == 0:
         pass
-    mode = int(arduino.readline())
+    data = arduino.readline().decode('utf-8')
     return app.response_class(
-        json.dumps({'mode': mode}),
+        data,
         mimetype='applications/json'
     )
     
@@ -47,12 +47,12 @@ def get_therm_mode():
     new_mode = request.json['mode']
     arduino.flushInput()
     arduino.flushOutput()
-    arduino.write((str(new_mode)).encode('utf-8'))
+    arduino.write(json.dumps({'mode': new_mode}).encode('utf-8'))
     while arduino.in_waiting == 0:
         pass
-    mode = int(arduino.readline())
+    data = arduino.readline().decode('utf-8')
     return app.response_class(
-        json.dumps({'mode': mode}),
+        data,
         mimetype='applications/json'
     )
 
