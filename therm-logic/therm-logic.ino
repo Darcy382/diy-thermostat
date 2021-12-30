@@ -15,7 +15,7 @@
 
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
-const float bound = 1; // Convert to define?
+float bound = 1;
 
 RF24 radio(7, 8); // CE, CSN
 StaticJsonDocument<200> doc;
@@ -31,18 +31,22 @@ uint64_t address[6] = {
 
 struct PayloadStruct {
   char nodeID;
-  float tempurature;
+  float temperature;
   float humidity;
   float heat_idx;
 };
 PayloadStruct payload;
 
+struct EventStruct {
+  float start_hour;
+  float temp;
+};
 
 int thermostat_state;
 float target;
 float avg_temp;
-float tempuratures[NUM_TEMP_SENSORS];
-bool received_all_temps;
+float temperatures[NUM_TEMP_SENSORS];
+bool received_all_temps;  
 
 void setup() {
   Serial.begin(9600);
@@ -70,27 +74,27 @@ void setup() {
 void loop() {
 
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    tempuratures[i] = NULL;
+    temperatures[i] = NULL;
   }
 
   
-  // Recieving tempuratures from all sensors
+  // Receiving temperatures from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
   received_all_temps = false;
   while (!received_all_temps) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
       if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
-        tempuratures[payload.nodeID] = payload.tempurature;
+        temperatures[payload.nodeID] = payload.temperature;
       } else {
         // TODO: Turn on the error light
-        // An invalid nodeID has been recived
+        // An invalid nodeID has been received
       }
     }
 
     received_all_temps = true;
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-      if (tempuratures[i] == NULL) {
+      if (temperatures[i] == NULL) {
         received_all_temps = false;
       }
     }
@@ -118,18 +122,18 @@ void loop() {
 
     // Serializing data for json output
     doc["mode"] = thermostat_state;
-    JsonArray tempuraturesJson = doc.createNestedArray("tempuraturesJson");
+    JsonArray temperaturesJson = doc.createNestedArray("temperaturesJson");
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-      tempuraturesJson.add(tempuratures[i]);  
+      temperaturesJson.add(temperatures[i]);
     }
     serializeJson(doc, Serial);
     digitalWrite(COMMUNICATION_LIGHT, LOW);
   }
 
-  // Calculating average tempurature
+  // Calculating average temperature
   float sum = 0;
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    sum += tempuratures[i];
+    sum += temperatures[i];
   }
   avg_temp = sum / NUM_TEMP_SENSORS;
 
