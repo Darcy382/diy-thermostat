@@ -17,11 +17,11 @@
 #define CLK A1
 #define DIO A2
 #define MAX_SCHEDULED_EVENTS 4
+#define ERROR_LIGHT A3
 
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
 float bound = 1;
-// const unsigned long DEFAULT_TIME = 1357041600;
 const unsigned long DEFAULT_TIME = 1640897447 - 18000;
 
 RF24 radio(7, 8); // CE, CSN
@@ -74,6 +74,7 @@ void setup() {
   pinMode(HEAT_MODE_LIGHT, OUTPUT);
   pinMode(COOL_MODE_LIGHT, OUTPUT);
   pinMode(FAN_MODE_LIGHT, OUTPUT);
+  pinMode(ERROR_LIGHT, OUTPUT);
   
   radio.begin();
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
@@ -97,8 +98,8 @@ void setup() {
   weekendScheduleCool[0].temp = 73;
   weekendScheduleCool[1].start_hour = 8;
   weekendScheduleCool[1].temp = 70;
-  weekendScheduleCool[2].start_hour = 21;
-  weekendScheduleCool[2].temp = 80;
+  weekendScheduleCool[2].start_hour = 9;
+  weekendScheduleCool[2].temp = 81;
   weekendScheduleCool[3].start_hour = NULL;
   weekendScheduleCool[3].temp = NULL;
 
@@ -127,22 +128,21 @@ void setup() {
 }
 
 void loop() {
-
+  // Receiving temperatures from all sensors
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
     temperatures[i] = NULL;
   }
-  
-  // Receiving temperatures from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
   received_all_temps = false;
+
   while (!received_all_temps) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
       if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
         temperatures[payload.nodeID] = payload.temperature;
       } else {
-        // TODO: Turn on the error light
-        // An invalid nodeID has been received
+          digitalWrite(ERROR_LIGHT, HIGH);
+          // An invalid nodeID has been received
       }
     }
 
@@ -162,20 +162,26 @@ void loop() {
     String input = Serial.readString();
     DeserializationError error = deserializeJson(doc, input);
     if (error) {
-      // Turn on the Error light
+      digitalWrite(ERROR_LIGHT, HIGH);
       // Serial.print(F("deserializeJson() failed: "));
       // Serial.println(error.f_str());
       return;
     }
 
-    JsonVariant mode = doc["mode"];
-    if (!mode.isNull()) {
+    JsonVariant mode_input = doc["mode"];
+    if (!mode_input.isNull()) {
       thermostat_state = doc["mode"];
     }
+    JsonVariant time_input = doc["time"];
+    if (!time_input.isNull()) {
+      setTime(doc["time"]);
+    }
+
     doc.clear();
 
     // Serializing data for json output
     doc["mode"] = thermostat_state;
+    doc["time"] = now();
     JsonArray temperaturesJson = doc.createNestedArray("temperaturesJson");
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
       temperaturesJson.add(temperatures[i]);
@@ -186,20 +192,20 @@ void loop() {
 
   // Checking schedule for target temperature
   if (timeStatus() == timeNotSet) {
-    // Turn on the error light
+      digitalWrite(ERROR_LIGHT, HIGH);
   }
   EventStruct *current_schedule;
   switch (thermostat_state)
   {
     case HEAT:
-      if (2 <= weekday() <= 6) { // Weekday
+      if ((2 <= weekday()) && (weekday() <= 6)) { // Weekday
         current_schedule = weekdayScheduleHeat;
       } else {
         current_schedule = weekendScheduleHeat;
       }
       break;
     case COOL: 
-      if (2 <= weekday() <= 6) { // Weekday
+      if ((2 <= weekday()) && (weekday() <= 6)) { // Weekday
         current_schedule = weekdayScheduleCool;
       } else {
         current_schedule = weekendScheduleCool;
@@ -221,8 +227,6 @@ void loop() {
     target = current_schedule[i].temp; 
     i++;
   }
-
-  // Display target on mini display
   display.showNumberDec(target, false);
 
 
@@ -305,7 +309,7 @@ void loop() {
       }
       break;
     default :
-      // Turn on the error light
+      digitalWrite(ERROR_LIGHT, HIGH);
       // The Thermostat is in an invalid state
       break;
   }
