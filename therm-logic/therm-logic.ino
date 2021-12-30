@@ -2,6 +2,8 @@
 #include <nRF24L01.h>
 #include <RF24.h>
 #include <ArduinoJson.h>
+#include <TimeLib.h>
+#include <TM1637Display.h>
 
 #define FAN_PIN 4
 #define AC_PIN 3
@@ -12,13 +14,19 @@
 #define COOL_MODE_LIGHT 9
 #define FAN_MODE_LIGHT 10
 #define NUM_TEMP_SENSORS 2
+#define CLK A1
+#define DIO A2
+#define MAX_SCHEDULED_EVENTS 4
 
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
 float bound = 1;
+// const unsigned long DEFAULT_TIME = 1357041600;
+const unsigned long DEFAULT_TIME = 1640897447 - 18000;
 
 RF24 radio(7, 8); // CE, CSN
 StaticJsonDocument<200> doc;
+TM1637Display display = TM1637Display(CLK, DIO);
 
 uint64_t address[6] = {
   0x7878787878LL,
@@ -41,6 +49,10 @@ struct EventStruct {
   float start_hour;
   float temp;
 };
+EventStruct weekdayScheduleCool[MAX_SCHEDULED_EVENTS];
+EventStruct weekendScheduleCool[MAX_SCHEDULED_EVENTS];
+EventStruct weekdayScheduleHeat[MAX_SCHEDULED_EVENTS];
+EventStruct weekendScheduleHeat[MAX_SCHEDULED_EVENTS];
 
 int thermostat_state;
 float target;
@@ -69,6 +81,49 @@ void setup() {
   }
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
+
+  // setSyncProvider( requestSync); Not sure what this does
+
+  weekdayScheduleCool[0].start_hour = 7;
+  weekdayScheduleCool[0].temp = 73;
+  weekdayScheduleCool[1].start_hour = 8;
+  weekdayScheduleCool[1].temp = 70;
+  weekdayScheduleCool[2].start_hour = 9;
+  weekdayScheduleCool[2].temp = 80;
+  weekdayScheduleCool[3].start_hour = NULL;
+  weekdayScheduleCool[3].temp = NULL;
+
+  weekendScheduleCool[0].start_hour = 7;
+  weekendScheduleCool[0].temp = 73;
+  weekendScheduleCool[1].start_hour = 8;
+  weekendScheduleCool[1].temp = 70;
+  weekendScheduleCool[2].start_hour = 21;
+  weekendScheduleCool[2].temp = 80;
+  weekendScheduleCool[3].start_hour = NULL;
+  weekendScheduleCool[3].temp = NULL;
+
+  weekdayScheduleHeat[0].start_hour = 7;
+  weekdayScheduleHeat[0].temp = 70;
+  weekdayScheduleHeat[1].start_hour = 8;
+  weekdayScheduleHeat[1].temp = 73;
+  weekdayScheduleHeat[2].start_hour = 21;
+  weekdayScheduleHeat[2].temp = 62;
+  weekdayScheduleHeat[3].start_hour = NULL;
+  weekdayScheduleHeat[3].temp = NULL;
+
+  weekendScheduleHeat[0].start_hour = 7;
+  weekendScheduleHeat[0].temp = 70;
+  weekendScheduleHeat[1].start_hour = 8;
+  weekendScheduleHeat[1].temp = 73;
+  weekendScheduleHeat[2].start_hour = 21;
+  weekendScheduleHeat[2].temp = 62;
+  weekendScheduleHeat[3].start_hour = NULL;
+  weekendScheduleHeat[3].temp = NULL;
+
+  setTime(DEFAULT_TIME);
+
+  display.clear();
+  display.setBrightness(7);
 }
 
 void loop() {
@@ -76,7 +131,6 @@ void loop() {
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
     temperatures[i] = NULL;
   }
-
   
   // Receiving temperatures from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
@@ -129,6 +183,48 @@ void loop() {
     serializeJson(doc, Serial);
     digitalWrite(COMMUNICATION_LIGHT, LOW);
   }
+
+  // Checking schedule for target temperature
+  if (timeStatus() == timeNotSet) {
+    // Turn on the error light
+  }
+  EventStruct *current_schedule;
+  switch (thermostat_state)
+  {
+    case HEAT:
+      if (2 <= weekday() <= 6) { // Weekday
+        current_schedule = weekdayScheduleHeat;
+      } else {
+        current_schedule = weekendScheduleHeat;
+      }
+      break;
+    case COOL: 
+      if (2 <= weekday() <= 6) { // Weekday
+        current_schedule = weekdayScheduleCool;
+      } else {
+        current_schedule = weekendScheduleCool;
+      }
+      break;
+    default:
+      current_schedule = NULL;
+      break;
+  }
+  
+  float current_hours = hour() + ((minute() + (second() / 60.)) / 60.);
+  int i = 0;
+  while (
+    current_schedule != NULL &&
+    i < MAX_SCHEDULED_EVENTS &&
+    current_schedule[i].start_hour != NULL &&
+    current_hours >= current_schedule[i].start_hour
+  ) {
+    target = current_schedule[i].temp; 
+    i++;
+  }
+
+  // Display target on mini display
+  display.showNumberDec(target, false);
+
 
   // Calculating average temperature
   float sum = 0;

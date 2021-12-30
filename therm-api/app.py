@@ -9,7 +9,7 @@ CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-arduino = serial.Serial(port='/dev/cu.usbmodem101', baudrate=9600, timeout=.1)
+arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
 
 
 def ping_arduino(send_data):
