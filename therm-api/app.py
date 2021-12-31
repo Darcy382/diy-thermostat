@@ -1,3 +1,4 @@
+import sys
 from flask import Flask, request
 from flask_cors import CORS
 import serial
@@ -14,8 +15,13 @@ arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
 
 def ping_arduino(send_data):
     arduino.flushInput()
+    arduino.write(1)
+    jsonString = json.dumps(send_data).encode('utf-8')
+    while arduino.in_waiting == 0:
+        pass
+    arduino.flushInput()
     arduino.flushOutput()
-    arduino.write(json.dumps(send_data).encode('utf-8'))
+    arduino.write(jsonString)
     while arduino.in_waiting == 0:
         pass
     received_data = arduino.readline().decode('utf-8')
