@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <ArduinoJson.h>
 #include <TimeLib.h>
 #include <TM1637Display.h>
 
@@ -25,7 +24,6 @@ float bound = 1;
 const unsigned long DEFAULT_TIME = 1640897447 - 18000;
 
 RF24 radio(7, 8); // CE, CSN
-StaticJsonDocument<768> doc;
 TM1637Display display = TM1637Display(CLK, DIO);
 
 uint64_t address[6] = {
@@ -45,15 +43,17 @@ struct PayloadStruct {
 };
 PayloadStruct payload;
 
-struct EventStruct {
-  bool name;
-  float startHour;
-  float temp;
-};
-EventStruct weekdayScheduleCool[MAX_SCHEDULED_EVENTS];
-EventStruct weekendScheduleCool[MAX_SCHEDULED_EVENTS];
-EventStruct weekdayScheduleHeat[MAX_SCHEDULED_EVENTS];
-EventStruct weekendScheduleHeat[MAX_SCHEDULED_EVENTS];
+float schedule_wend_cool_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
+float schedule_wend_cool_temp[MAX_SCHEDULED_EVENTS] = {70, 75, 72, 73};
+
+float schedule_wday_cool_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
+float schedule_wday_cool_temp[MAX_SCHEDULED_EVENTS] = {70, 75, 72, 73};
+
+float schedule_wend_heat_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
+float schedule_wend_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
+
+float schedule_wday_heat_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
+float schedule_wday_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
 
 int thermostat_state;
 float target;
@@ -85,42 +85,6 @@ void setup() {
   radio.startListening();
 
   // setSyncProvider( requestSync); Not sure what this does
-
-  weekendScheduleCool[0].startHour = 7;
-  weekendScheduleCool[0].temp = 73;
-  weekendScheduleCool[1].startHour = 8;
-  weekendScheduleCool[1].temp = 70;
-  weekendScheduleCool[2].startHour = 9;
-  weekendScheduleCool[2].temp = 81;
-  weekendScheduleCool[3].startHour = NULL;
-  weekendScheduleCool[3].temp = NULL;
-  
-  weekdayScheduleCool[0].startHour = 7;
-  weekdayScheduleCool[0].temp = 73;
-  weekdayScheduleCool[1].startHour = 8;
-  weekdayScheduleCool[1].temp = 70;
-  weekdayScheduleCool[2].startHour = 9;
-  weekdayScheduleCool[2].temp = 80;
-  weekdayScheduleCool[3].startHour = NULL;
-  weekdayScheduleCool[3].temp = NULL;
-
-  weekendScheduleHeat[0].startHour = 7;
-  weekendScheduleHeat[0].temp = 70;
-  weekendScheduleHeat[1].startHour = 8;
-  weekendScheduleHeat[1].temp = 73;
-  weekendScheduleHeat[2].startHour = 21;
-  weekendScheduleHeat[2].temp = 62;
-  weekendScheduleHeat[3].startHour = NULL;
-  weekendScheduleHeat[3].temp = NULL;
-
-  weekdayScheduleHeat[0].startHour = 7;
-  weekdayScheduleHeat[0].temp = 70;
-  weekdayScheduleHeat[1].startHour = 8;
-  weekdayScheduleHeat[1].temp = 73;
-  weekdayScheduleHeat[2].startHour = 21;
-  weekdayScheduleHeat[2].temp = 62;
-  weekdayScheduleHeat[3].startHour = NULL;
-  weekdayScheduleHeat[3].temp = NULL;
 
   setTime(DEFAULT_TIME);
 
@@ -159,97 +123,72 @@ void loop() {
   digitalWrite(RADIO_LIGHT, LOW);
   
   // Checking for computer input
-  if (Serial.available() != 0) {
+  bool computer_input = false;
+  while (Serial.available() != 0) {
     digitalWrite(COMMUNICATION_LIGHT, HIGH);
-    Serial.parseInt();
-    Serial.write(1);
-    while (!Serial.available()) {}
-    // Deserializing computer json input
-    DeserializationError error = deserializeJson(doc, Serial);
-    if (error) {
-      digitalWrite(ERROR_LIGHT, HIGH);
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.f_str());
-      return;
+    computer_input = true;
+    char header = Serial.read();
+    switch (header)
+    {
+      case 'M':
+        thermostat_state = Serial.parseInt();
+        break;
+      case 'T':
+        setTime(Serial.parseInt());
+      case 'S':
+        char header2 = Serial.read();
+        char header3 = Serial.read();
+        float *setting_schedule_start;
+        float *setting_schedule_temp;
+        switch (header2)
+        {
+          case 'H':
+            switch (header3)
+            {
+              case 'D':
+                setting_schedule_start = schedule_wday_heat_start;
+                setting_schedule_temp = schedule_wday_heat_temp;
+                break;
+              case 'E':
+                setting_schedule_start = schedule_wend_heat_start;
+                setting_schedule_temp = schedule_wend_heat_temp;
+                break;
+              default:
+                digitalWrite(ERROR_LIGHT, HIGH);
+                break;
+            }
+            break;
+          case 'C': 
+            switch (header3)
+            {
+              case 'D':
+                setting_schedule_start = schedule_wday_cool_start;
+                setting_schedule_temp = schedule_wday_cool_temp;
+                break;
+              case 'E':
+                setting_schedule_start = schedule_wend_cool_start;
+                setting_schedule_temp = schedule_wend_cool_temp;
+                break;
+              default:
+                digitalWrite(ERROR_LIGHT, HIGH);
+                break;
+            }
+            break;
+          default:
+            digitalWrite(ERROR_LIGHT, HIGH);
+            break;
+        }
+        for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+          setting_schedule_start[i] = Serial.parseFloat();
+          setting_schedule_temp[i] = Serial.parseFloat();
+        }
+      default:
+        digitalWrite(ERROR_LIGHT, HIGH);
+        break;
     }
-
-    JsonVariant mode_input = doc["mode"];
-    if (!mode_input.isNull()) {
-      thermostat_state = doc["mode"];
-    }
-    JsonVariant time_input = doc["time"];
-    if (!time_input.isNull()) {
-      setTime(doc["time"]);
-    }
-
-     JsonVariant weekendScheduleCool_input = doc["weekendScheduleCool"];
-     if (!weekendScheduleCool_input.isNull()) {
-       for (int i = 0; i <= MAX_SCHEDULED_EVENTS; i++) {
-         weekendScheduleCool[i].startHour = doc["weekendScheduleCool"][i]["start_hour"];
-         weekendScheduleCool[i].temp = doc["weekendScheduleCool"][i]["temp"];
-         i++;
-       }
-     }
-    JsonVariant weekdayScheduleCool_input = doc["weekdayScheduleCool"];
-    if (!weekdayScheduleCool_input.isNull()) {
-      for (int i = 0; i <= MAX_SCHEDULED_EVENTS; i++) {
-        weekdayScheduleCool[i].startHour = doc["weekdayScheduleCool"][i]["start_hour"];
-        weekdayScheduleCool[i].temp = doc["weekdayScheduleCool"][i]["temp"];
-        i++;
-      }
-    }
-    JsonVariant weekendScheduleHeat_input = doc["weekendScheduleHeat"];
-    if (!weekendScheduleHeat_input.isNull()) {
-      for (int i = 0; i <= MAX_SCHEDULED_EVENTS; i++) {
-        weekendScheduleHeat[i].startHour = doc["weekendScheduleHeat"][i]["start_hour"];
-        weekendScheduleHeat[i].temp = doc["weekendScheduleHeat"][i]["temp"];
-        i++;
-      }
-    }
-    JsonVariant weekdayScheduleHeat_input = doc["weekdayScheduleHeat"];
-    if (!weekdayScheduleHeat_input.isNull()) {
-      for (int i = 0; i <= MAX_SCHEDULED_EVENTS; i++) {
-        weekdayScheduleHeat[i].startHour = doc["weekdayScheduleHeat"][i]["start_hour"];
-        weekdayScheduleHeat[i].temp = doc["weekdayScheduleHeat"][i]["temp"];
-        i++;
-      }
-    }
-
-    doc.clear();
-
-    // Serializing data for json output
-    doc["mode"] = thermostat_state;
-    doc["time"] = now();
-    JsonArray temperaturesJson = doc.createNestedArray("temperaturesJson");
-    for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-      temperaturesJson.add(temperatures[i]);
-    }
-    JsonArray weekendScheduleCool_output = doc.createNestedArray("weekendScheduleCool");
-    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
-      JsonObject temporaryObj = weekendScheduleCool_output.createNestedObject();
-      temporaryObj["start_hour"] = weekendScheduleCool[i].startHour;
-      temporaryObj["temp"] = weekendScheduleCool[i].temp;
-    }
-    JsonArray weekdayScheduleCool_output = doc.createNestedArray("weekdayScheduleCool");
-    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
-      JsonObject temporaryObj = weekdayScheduleCool_output.createNestedObject();
-      temporaryObj["start_hour"] = weekdayScheduleCool[i].startHour;
-      temporaryObj["temp"] = weekdayScheduleCool[i].temp;
-    }
-    JsonArray weekendScheduleHeat_output = doc.createNestedArray("weekendScheduleHeat");
-    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
-      JsonObject temporaryObj = weekendScheduleHeat_output.createNestedObject();
-      temporaryObj["start_hour"] = weekendScheduleHeat[i].startHour;
-      temporaryObj["temp"] = weekendScheduleHeat[i].temp;
-    }
-    JsonArray weekdayScheduleHeat_output = doc.createNestedArray("weekdayScheduleHeat");
-    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
-      JsonObject temporaryObj = weekdayScheduleHeat_output.createNestedObject();
-      temporaryObj["start_hour"] = weekdayScheduleHeat[i].startHour;
-      temporaryObj["temp"] = weekdayScheduleHeat[i].temp;
-    }
-
-    serializeJson(doc, Serial);
+  }
+  if (computer_input) {
+    // TODO: Print out return information in the Serial
     digitalWrite(COMMUNICATION_LIGHT, LOW);
   }
 
@@ -257,37 +196,43 @@ void loop() {
   if (timeStatus() == timeNotSet) {
       digitalWrite(ERROR_LIGHT, HIGH);
   }
-  EventStruct *current_schedule;
+  float *current_schedule_start;
+  float *current_schedule_temp;
   switch (thermostat_state)
   {
     case HEAT:
       if ((2 <= weekday()) && (weekday() <= 6)) { // Weekday
-        current_schedule = weekdayScheduleHeat;
+        current_schedule_start = schedule_wday_heat_start;
+        current_schedule_temp = schedule_wday_heat_temp;
       } else {
-        current_schedule = weekendScheduleHeat;
+        current_schedule_start = schedule_wend_heat_start;
+        current_schedule_temp = schedule_wend_heat_temp;
       }
       break;
     case COOL: 
       if ((2 <= weekday()) && (weekday() <= 6)) { // Weekday
-        current_schedule = weekdayScheduleCool;
+        current_schedule_start = schedule_wday_cool_start;
+        current_schedule_temp = schedule_wday_cool_temp;
       } else {
-        current_schedule = weekendScheduleCool;
+        current_schedule_start = schedule_wend_cool_start;
+        current_schedule_temp = schedule_wend_cool_temp;
       }
       break;
     default:
-      current_schedule = NULL;
+      current_schedule_start = NULL;
+      current_schedule_temp = NULL;
       break;
   }
   
   float current_hours = hour() + ((minute() + (second() / 60.)) / 60.);
   int i = 0;
   while (
-    current_schedule != NULL &&
+    current_schedule_start != NULL &&
     i < MAX_SCHEDULED_EVENTS &&
-    current_schedule[i].startHour != NULL &&
-    current_hours >= current_schedule[i].startHour
+    current_schedule_start[i] != NULL &&
+    current_hours >= current_schedule_start[i]
   ) {
-    target = current_schedule[i].temp; 
+    target = current_schedule_temp[i]; 
     i++;
   }
   display.showNumberDec(target, false);
