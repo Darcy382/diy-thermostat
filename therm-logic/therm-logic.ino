@@ -130,6 +130,8 @@ void loop() {
     char header = Serial.read();
     switch (header)
     {
+      case 'P':
+        break;
       case 'M':
         thermostat_state = Serial.parseInt();
         break;

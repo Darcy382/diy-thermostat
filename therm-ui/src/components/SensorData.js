@@ -12,13 +12,11 @@ function SensorData(props) {
     <Card>
       <Card.Body>
         <Card.Title>Sensor Data:</Card.Title>
-          <Card.Text>
             {props.tempData.map((value, index) => {
-              return <p>Sensor {index} temperature: {value}</p>
+              return <p key={index}>Sensor {index} temperature: {value}</p>
             })}
             {/* TODO: Make the average temp null if there is no data */}
             <p>Average temperature: {lodash.sum(props.tempData) / props.tempData.length}</p>
-          </Card.Text>
         <Button variant="primary" disabled>Refresh</Button>
       </Card.Body>
     </Card>

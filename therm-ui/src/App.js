@@ -2,16 +2,21 @@ import './App.css';
 import React from 'react';
 import SensorData from './components/SensorData';
 import ThermostatModes from './components/ThermostatModes';
+import Schedule from './components/Schedule';
 
-function App() {
-  return (
-    <div className='layout'>
-      <div className='main'>
-        <SensorData tempData={[null, null]}/>
-        <ThermostatModes />
+class App extends React.Component {
+
+  render() {
+    return (
+      <div className='layout'>
+        <div className='main'>
+          <SensorData tempData={[null, null]}/>
+          <ThermostatModes />
+          <Schedule />
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 export default App;
