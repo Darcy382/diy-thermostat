@@ -91,7 +91,7 @@ void setup() {
   display.clear();
   display.setBrightness(7);
 
-  Serial.setTimeout(1000); // Set to 100 or 1000 if having issues
+  Serial.setTimeout(100); // Set to 100 or 1000 if having issues
 }
 
 void loop() {
@@ -135,6 +135,7 @@ void loop() {
         break;
       case 'T':
         setTime(Serial.parseInt());
+        break;
       case 'S':
         char header2 = Serial.read();
         char header3 = Serial.read();
@@ -158,7 +159,7 @@ void loop() {
                 break;
             }
             break;
-          case 'C': 
+          case 'C':
             switch (header3)
             {
               case 'D':
@@ -182,6 +183,7 @@ void loop() {
           setting_schedule_start[i] = Serial.parseFloat();
           setting_schedule_temp[i] = Serial.parseFloat();
         }
+        break;
       default:
         digitalWrite(ERROR_LIGHT, HIGH);
         break;
@@ -189,7 +191,51 @@ void loop() {
   }
   if (computer_input) {
     // TODO: Print out return information in the Serial
+    // Print out the current temp sensor readings T 12 12 12 12
+    Serial.write("C");
+    for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+      Serial.write(" ");
+      Serial.print(temperatures[i], 2);
+    }
+    // Print out the thermostat mode 
+    Serial.write("M");
+    Serial.print(thermostat_state);
+
+    // Print out the current time
+    Serial.write("T");
+    Serial.print(now());
+
+    // Print out all of the schedules
+    Serial.write("SCD");
+    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+      Serial.write(" ");
+      Serial.print(schedule_wday_cool_start[i]);
+      Serial.write(" ");
+      Serial.print(schedule_wday_cool_temp[i]);
+    }
+    Serial.write("SCE");
+    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+      Serial.write(" ");
+      Serial.print(schedule_wend_cool_start[i]);
+      Serial.write(" ");
+      Serial.print(schedule_wend_cool_temp[i]);
+    }
+    Serial.write("SHD");
+    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+      Serial.write(" ");
+      Serial.print(schedule_wday_heat_start[i]);
+      Serial.write(" ");
+      Serial.print(schedule_wday_heat_temp[i]);
+    }
+    Serial.write("SHE");
+    for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+      Serial.write(" ");
+      Serial.print(schedule_wend_heat_start[i]);
+      Serial.write(" ");
+      Serial.print(schedule_wend_heat_temp[i]);
+    }
     digitalWrite(COMMUNICATION_LIGHT, LOW);
+    Serial.println();
   }
 
   // Checking schedule for target temperature
