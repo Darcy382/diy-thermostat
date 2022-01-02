@@ -1,6 +1,5 @@
 import sys
 from flask import Flask, request
-from serial.serialposix import Serial
 from flask_cors import CORS
 import serial
 import time
