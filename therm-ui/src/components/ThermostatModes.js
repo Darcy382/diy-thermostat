@@ -41,8 +41,8 @@ class ThermostatModes extends React.Component {
     return (
       <Card>
       <Card.Body>
-        <Card.Title>Sensor Data:</Card.Title>
-        <Card.Text style={{textAlign: "center"}}>
+        <Card.Title>Mode:</Card.Title>
+        <div style={{textAlign: "center"}}>
           <ButtonGroup>
             {thermModes.map((radio, idx) => (
               <ToggleButton
@@ -62,7 +62,7 @@ class ThermostatModes extends React.Component {
               </ToggleButton>
             ))}
           </ButtonGroup>
-        </Card.Text>
+        </div>
         </Card.Body>
       </Card>
     );

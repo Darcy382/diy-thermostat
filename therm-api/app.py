@@ -44,6 +44,8 @@ def parseFloat(lst):
     return float("".join(lst[start_idx:i])), lst[i:]
 
 def ping_arduino(send_data):
+    arduino.reset_input_buffer()
+    arduino.reset_output_buffer()
     signal_chars = {
         "mode": 'M',
         "time": 'T',
@@ -53,6 +55,9 @@ def ping_arduino(send_data):
         "weekendScheduleHeat": 'SHE',
     }
 
+    if len(send_data) == 0:
+        serial_print('R')
+        
     for key, value in send_data.items():
         if key in signal_chars:
             if key == "mode":
