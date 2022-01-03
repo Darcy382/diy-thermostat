@@ -2,7 +2,7 @@ import './App.css';
 import React from 'react';
 import SensorData from './components/SensorData';
 import ThermostatModes from './components/ThermostatModes';
-import Schedule from './components/Schedule';
+import ScheduleCard from './components/ScheduleCard';
 import LoadingScreen from './components/Loading';
 
 class App extends React.Component {
@@ -19,12 +19,11 @@ class App extends React.Component {
   }
 
   renderCardsData() {
-    
     return (
       <>
       <SensorData tempData={this.state.data.temperatures}/>
       <ThermostatModes radioValue={this.state.data.mode}/>
-      <Schedule 
+      <ScheduleCard 
         weekdayScheduleCool={this.state.data.weekdayScheduleCool}
         weekendScheduleCool={this.state.data.weekendScheduleCool}
         weekdayScheduleHeat={this.state.data.weekdayScheduleHeat}
@@ -36,16 +35,15 @@ class App extends React.Component {
 
   renderCardsLoading() {
     return (
-      <LoadingScreen />
+      // <LoadingScreen />
+      <h1>Fetching Data from Thermostat...</h1>
     )
   }
 
   renderCardsError() {
     return (
       <>
-      <SensorData tempData={[null, null]}/>
-      <ThermostatModes radioValue={null}/>
-      <Schedule />
+      <h1>An error connecting to the thermostat has occurred</h1>
       </>
     )
   }

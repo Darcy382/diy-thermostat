@@ -21,13 +21,14 @@ function hoursToTime(hours) {
 
 
 function timeToHours(time) {
+  const hours = parseInt(time.substring(0, 2))
+  const minutes = parseInt(time.substring(3))
+  return hours + (minutes / 60.);
 }
 
-
-class SchedulePicker extends React.Component {
+class ScheduleList extends React.Component {
 
   render() {
-    console.log(this.props.schedule)
     return (
       <div className="schedule" key="">
         <h6>{this.props.title}</h6>
@@ -45,10 +46,10 @@ class SchedulePicker extends React.Component {
               <div key={index}>
               <Row>
                 <Col>
-                <Form.Control type="time" step={900} value={hoursToTime(event.start)}/>
+                <Form.Control type="time" step={900} onChange={(event) => this.props.updateTime(this.props.scheduleType, index, timeToHours(event.target.value))} value={hoursToTime(event.start)}/>
                 </Col>
                 <Col>
-                <Form.Control type="number" pattern="\d*" value={event.temp} />
+                <Form.Control type="number" pattern="\d*" onChange={(event) => this.props.updateTemp(this.props.scheduleType, index, parseFloat(event.target.value))} value={event.temp} />
                 </Col>
               </Row>
               <br />
@@ -62,4 +63,4 @@ class SchedulePicker extends React.Component {
   }
 }
 
-export default SchedulePicker;
+export default ScheduleList;

@@ -157,6 +157,9 @@ void loop() {
                 setting_schedule_temp = schedule_wend_heat_temp;
                 break;
               default:
+                Serial.write("e");
+                Serial.print(1);
+                Serial.print(" ");
                 digitalWrite(ERROR_LIGHT, HIGH);
                 break;
             }
@@ -173,11 +176,19 @@ void loop() {
                 setting_schedule_temp = schedule_wend_cool_temp;
                 break;
               default:
+                Serial.print("e");
+                Serial.print(2);
+                Serial.print(" ");
                 digitalWrite(ERROR_LIGHT, HIGH);
                 break;
             }
             break;
           default:
+            Serial.print("e");
+            Serial.print(3);
+            Serial.print(" ");
+            Serial.print(header2);
+            Serial.print(" ");
             digitalWrite(ERROR_LIGHT, HIGH);
             break;
         }
@@ -187,6 +198,9 @@ void loop() {
         }
         break;
       default:
+        Serial.print("e");
+        Serial.print(4);
+        Serial.print(" ");
         digitalWrite(ERROR_LIGHT, HIGH);
         break;
     }

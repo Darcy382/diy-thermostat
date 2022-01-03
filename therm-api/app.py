@@ -93,13 +93,15 @@ test_data = {
     ]
 }
 
-TEST_MODE = True
+thisString = []
+
+TEST_MODE = False
 
 if not TEST_MODE: 
-    arduino = serial.Serial(port='/dev/cu.usbmodem101', baudrate=9600, timeout=.1)
+    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
 
     def serial_print(string):
-        print(arduino.out_waiting)
+        thisString.append(str(string))
         arduino.write(str(string).encode('utf-8'))
 
     def serial_read():
@@ -126,8 +128,6 @@ if not TEST_MODE:
         return float("".join(lst[start_idx:i])), lst[i:]
 
     def ping_arduino(send_data):
-        arduino.reset_input_buffer()
-        arduino.reset_output_buffer()
         signal_chars = {
             "mode": 'M',
             "time": 'T',
@@ -153,15 +153,18 @@ if not TEST_MODE:
                     serial_print(signal_chars[key])
                     for i in range(N):
                         serial_print(' ')
-                        serial_print(value[i]["start"])
+                        serial_print("{:.2f}".format(value[i]["start"]))
                         serial_print(' ')
-                        serial_print(value[i]["temp"])
+                        serial_print("{:.2f}".format(value[i]["temp"]))
                     # TODO: write null for the remaining 4 temperatures if they exist
 
         while arduino.in_waiting == 0:
             pass
         response = {}
-        result = list(arduino.readall().decode('utf-8'))
+        print("".join(thisString))
+        bites = arduino.readall()
+        print(bites)
+        result = list(bites.decode('utf-8'))
         i = 0
         while len(result) > 0:
             char = result[0]
@@ -223,6 +226,12 @@ if not TEST_MODE:
                         raise Exception
                 else:
                     raise Exception
+            elif char=="e":
+                print("Exception: ")
+                errorCode, result = parseInt(result)
+                print(result)
+                print(errorCode)
+                return result
             else:
                 result = result[1:]
             
@@ -237,6 +246,7 @@ def set_therm_mode():
     if not TEST_MODE:
         return ping_arduino({})
     else:
+        time.sleep(1)
         return app.response_class(
             json.dumps(test_data),
             mimetype='applications/json'
@@ -249,6 +259,7 @@ def get_therm_mode():
     if not TEST_MODE:
         return ping_arduino(request.json)
     else:
+        time.sleep(1)
         return app.response_class(
             json.dumps(test_data),
             mimetype='applications/json'
@@ -256,4 +267,4 @@ def get_therm_mode():
 
 
 if __name__ == "__main__":
-    app.run(host='192.168.1.32')
+    app.run(host='192.168.1.32', threaded=False)

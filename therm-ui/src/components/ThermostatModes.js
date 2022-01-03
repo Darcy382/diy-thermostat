@@ -9,8 +9,9 @@ const thermModes = [
 ];
 
 class ThermostatModes extends React.Component {
-  state = { radioValue: null, isLoading: true, error: null };
+  state = { radioValue: this.props.radioValue, isLoading: true, error: null };
 
+  // TODO: Figure out why this works and it is not in an arrow function
   async setThermostatMode(mode) {
     try {
       const requestOptions = {
