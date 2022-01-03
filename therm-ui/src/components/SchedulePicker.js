@@ -21,20 +21,15 @@ function hoursToTime(hours) {
 
 
 function timeToHours(time) {
-
 }
 
 
 class SchedulePicker extends React.Component {
 
-  constructor(props) {
-    super(props);
-    this.state = {date: new Date()};
-  }
-
   render() {
+    console.log(this.props.schedule)
     return (
-      <div className="schedule">
+      <div className="schedule" key="">
         <h6>{this.props.title}</h6>
         <Form>
           <Row>
@@ -50,10 +45,10 @@ class SchedulePicker extends React.Component {
               <div key={index}>
               <Row>
                 <Col>
-                <Form.Control type="time" step={900} defaultValue={hoursToTime(event.start)}/>
+                <Form.Control type="time" step={900} value={hoursToTime(event.start)}/>
                 </Col>
                 <Col>
-                <Form.Control type="number" pattern="\d*" defaultValue={event.temp} />
+                <Form.Control type="number" pattern="\d*" value={event.temp} />
                 </Col>
               </Row>
               <br />
