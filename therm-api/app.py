@@ -101,10 +101,7 @@ if not TEST_MODE:
 
     def serial_print(string):
         encoded = str(string).encode('utf-8')
-        print(encoded)
         arduino.write(str(string).encode('utf-8'))
-        # if (arduino.in_waiting):
-        #     print(arduino.readall())
 
     def serial_read():
         return arduino.read().decode('utf-8')
@@ -140,7 +137,7 @@ if not TEST_MODE:
         }
 
         if len(send_data) == 0:
-            serial_print('R')
+            serial_print('P')
             
         for key, value in send_data.items():
             if key in signal_chars:
@@ -163,9 +160,9 @@ if not TEST_MODE:
         while arduino.in_waiting == 0:
             pass
         response = {}
-        bites = arduino.readall()
-        print(bites)
-        result = list(bites.decode('utf-8'))
+        arduino_response = arduino.readall()
+        print(arduino_response)
+        result = list(arduino_response.decode('utf-8'))
         i = 0
         while len(result) > 0:
             char = result[0]
