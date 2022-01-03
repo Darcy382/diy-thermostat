@@ -93,16 +93,18 @@ test_data = {
     ]
 }
 
-thisString = []
 
 TEST_MODE = False
 
 if not TEST_MODE: 
-    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
+    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=1)
 
     def serial_print(string):
-        thisString.append(str(string))
+        encoded = str(string).encode('utf-8')
+        print(encoded)
         arduino.write(str(string).encode('utf-8'))
+        # if (arduino.in_waiting):
+        #     print(arduino.readall())
 
     def serial_read():
         return arduino.read().decode('utf-8')
@@ -161,7 +163,6 @@ if not TEST_MODE:
         while arduino.in_waiting == 0:
             pass
         response = {}
-        print("".join(thisString))
         bites = arduino.readall()
         print(bites)
         result = list(bites.decode('utf-8'))

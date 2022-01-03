@@ -35,7 +35,7 @@ class ScheduleCard extends React.Component {
 
 
   sendSchedule = async () => {
-    this.setState({isLoading: true})
+    // this.setState({isLoading: true})
     try {
       const requestOptions = {
         method: 'POST',

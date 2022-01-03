@@ -139,8 +139,11 @@ void loop() {
         setTime(Serial.parseInt());
         break;
       case 'S':
-        char header2 = Serial.read();
-        char header3 = Serial.read();
+        char header2;
+        char header3;
+        while (Serial.available() < 2) {}
+        header2 = Serial.read();
+        header3 = Serial.read();
         float *setting_schedule_start;
         float *setting_schedule_temp;
         switch (header2)
@@ -184,11 +187,9 @@ void loop() {
             }
             break;
           default:
-            Serial.print("e");
-            Serial.print(3);
-            Serial.print(" ");
+            Serial.print(header);
             Serial.print(header2);
-            Serial.print(" ");
+            Serial.print(header3);
             digitalWrite(ERROR_LIGHT, HIGH);
             break;
         }
