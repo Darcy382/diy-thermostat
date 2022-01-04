@@ -3,8 +3,9 @@ import React from 'react';
 import SensorData from './components/SensorData';
 import ThermostatModes from './components/ThermostatModes';
 import ScheduleCard from './components/ScheduleCard';
-import LoadingScreen from './components/Loading';
 import { Spinner } from 'react-bootstrap';
+import "react-notifications/lib/notifications.css";
+import { NotificationContainer } from 'react-notifications';
 
 class App extends React.Component {
   state = { data: null, isLoading: true, error: null };
@@ -57,6 +58,7 @@ class App extends React.Component {
   render() {
     return (
       <div className='layout'>
+        <NotificationContainer />
         <div className='main'>
           {this.state.data ?
           this.renderCardsData() :

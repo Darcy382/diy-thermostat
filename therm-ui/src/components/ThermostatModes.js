@@ -1,5 +1,6 @@
 import React from 'react';
 import { ButtonGroup, Card, ToggleButton } from 'react-bootstrap';
+import NotificationManager from 'react-notifications/lib/NotificationManager';
 
 const thermModes = [
   { name: 'Heat', value: 1, buttonStyle: 'outline-danger'},
@@ -22,10 +23,11 @@ class ThermostatModes extends React.Component {
       const response = await fetch('http://192.168.1.32:5000/thermostat/mode', requestOptions);
       const data = await response.json();
       this.setState({ radioValue: data.mode, isLoading: false });
-      // Render success alert
+      NotificationManager.success("Success", "", 1000);
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
-      // Render error alert
+      NotificationManager.error("Error", "", 1000);
+
     }
   }
   

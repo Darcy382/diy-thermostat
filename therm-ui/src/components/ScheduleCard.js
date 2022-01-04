@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Card, Nav, Spinner } from "react-bootstrap";
+import NotificationManager from "react-notifications/lib/NotificationManager";
 import { WEEKDAY_SCHEDULE_HEAT, WEEKEND_SCHEDULE_HEAT, WEEKDAY_SCHEDULE_COOL, WEEKEND_SCHEDULE_COOL } from "./constants";
 import ScheduleList from "./ScheduleList";
 
@@ -57,8 +58,10 @@ class ScheduleCard extends React.Component {
         weekendScheduleCool: data.weekendScheduleCool,
         isLoading: false 
       });
+      NotificationManager.success("Success", "", 1000);
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
+      NotificationManager.error("Success", "", 1000);
     }
   }
   

@@ -1,6 +1,5 @@
-import { mapValues } from "lodash";
 import React from "react";
-import { Card, Col, Form, Row } from "react-bootstrap";
+import { Col, Form, Row } from "react-bootstrap";
 
 
 function hoursToTime(hours) {
