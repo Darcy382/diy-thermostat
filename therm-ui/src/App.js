@@ -6,6 +6,7 @@ import ScheduleCard from './components/ScheduleCard';
 import { Spinner } from 'react-bootstrap';
 import "react-notifications/lib/notifications.css";
 import { NotificationContainer } from 'react-notifications';
+import AdvancedCard from './components/AdvancedCard';
 
 class App extends React.Component {
   state = { data: null, isLoading: true, error: null };
@@ -31,6 +32,7 @@ class App extends React.Component {
         weekdayScheduleHeat={this.state.data.weekdayScheduleHeat}
         weekendScheduleHeat={this.state.data.weekendScheduleHeat}
       />
+      <AdvancedCard />
       </>
     )
   }

@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, send_file, send_from_directory, safe_join, abort
 from flask_cors import CORS
 import serial
 import time
@@ -11,6 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.config["CSV_SERVICE"] = "/Users/kyledarcy/dev/diy-thermostat/csv-service"
 
 test_data = {
     "temperatures": [
@@ -92,7 +93,6 @@ test_data = {
         }
     ]
 }
-
 
 TEST_MODE = False
 
@@ -262,7 +262,12 @@ def get_therm_mode():
             json.dumps(test_data),
             mimetype='applications/json'
         )
+    
+@app.route("/thermostat/logging")
+def getSensorLogging():
+    return send_from_directory(app.config["CSV_SERVICE"], path="thermostat_data.csv", as_attachment=True)
 
 
 if __name__ == "__main__":
     app.run(host='192.168.1.32', threaded=False)
+    # app.run(host='192.168.1.32', threaded=True)
