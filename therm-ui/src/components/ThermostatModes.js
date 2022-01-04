@@ -22,8 +22,10 @@ class ThermostatModes extends React.Component {
       const response = await fetch('http://192.168.1.32:5000/thermostat/mode', requestOptions);
       const data = await response.json();
       this.setState({ radioValue: data.mode, isLoading: false });
+      // Render success alert
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
+      // Render error alert
     }
   }
   

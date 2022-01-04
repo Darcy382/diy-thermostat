@@ -35,7 +35,7 @@ class ScheduleCard extends React.Component {
 
 
   sendSchedule = async () => {
-    // this.setState({isLoading: true})
+    this.setState({isLoading: true})
     try {
       const requestOptions = {
         method: 'POST',
@@ -94,7 +94,7 @@ class ScheduleCard extends React.Component {
         <ScheduleList title="Weekday" schedule={weekday} updateTime={this.updateTime} updateTemp={this.updateTemp} scheduleType={weekdayType}/>
         <ScheduleList title="Weekend" schedule={weekend} updateTime={this.updateTime} updateTemp={this.updateTemp} scheduleType={weekendType}/>
         {this.state.isLoading ? (
-        <Button variant="outline-success" disabled>
+        <Button variant="outline-secondary" disabled>
           <Spinner animation="border" size="sm" /> <span> Loading...</span>
         </Button>) :
         (<Button onClick={this.sendSchedule} variant="success">

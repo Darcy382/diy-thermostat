@@ -97,7 +97,7 @@ test_data = {
 TEST_MODE = False
 
 if not TEST_MODE: 
-    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=1)
+    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
 
     def serial_print(string):
         encoded = str(string).encode('utf-8')

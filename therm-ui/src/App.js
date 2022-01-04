@@ -4,6 +4,7 @@ import SensorData from './components/SensorData';
 import ThermostatModes from './components/ThermostatModes';
 import ScheduleCard from './components/ScheduleCard';
 import LoadingScreen from './components/Loading';
+import { Spinner } from 'react-bootstrap';
 
 class App extends React.Component {
   state = { data: null, isLoading: true, error: null };
@@ -36,7 +37,11 @@ class App extends React.Component {
   renderCardsLoading() {
     return (
       // <LoadingScreen />
-      <h1>Fetching Data from Thermostat...</h1>
+      <div style={{textAlign: "center", marginTop: "20px"}}>
+        <Spinner animation="border"/>
+        <h1 style={{display: "inline"}}>&nbsp;&nbsp;Fetching Data from Thermostat...</h1>
+      </div>
+      
     )
   }
 
