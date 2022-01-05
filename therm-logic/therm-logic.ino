@@ -3,6 +3,7 @@
 #include <RF24.h>
 #include <TimeLib.h>
 #include <TM1637Display.h>
+#include <EEPROM.h>
 
 #define FAN_PIN 4
 #define AC_PIN 3
@@ -44,33 +45,35 @@ struct PayloadStruct {
 };
 PayloadStruct payload;
 
-float schedule_wend_cool_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
-float schedule_wend_cool_temp[MAX_SCHEDULED_EVENTS] = {70, 75, 72, 73};
+float schedule_wend_cool_start[MAX_SCHEDULED_EVENTS];
+float schedule_wend_cool_temp[MAX_SCHEDULED_EVENTS];
 
-float schedule_wday_cool_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
-float schedule_wday_cool_temp[MAX_SCHEDULED_EVENTS] = {70, 75, 72, 73};
+float schedule_wday_cool_start[MAX_SCHEDULED_EVENTS];
+float schedule_wday_cool_temp[MAX_SCHEDULED_EVENTS];
 
-float schedule_wend_heat_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
-float schedule_wend_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
+float schedule_wend_heat_start[MAX_SCHEDULED_EVENTS];
+float schedule_wend_heat_temp[MAX_SCHEDULED_EVENTS];
 
-float schedule_wday_heat_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21}; 
-float schedule_wday_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
+float schedule_wday_heat_start[MAX_SCHEDULED_EVENTS];
+float schedule_wday_heat_temp[MAX_SCHEDULED_EVENTS];
 
 int thermostat_state;
 int fan_setting;
 float target;
 float avg_temp;
+int eeAddress;
 
 PayloadStruct sensors[NUM_TEMP_SENSORS];
 bool received_all_temps;  
 
 void setup() {
   Serial.begin(9600);
+  Serial.setTimeout(100); // Increase this if having issues 
   
   thermostat_state = THERM_OFF;
   fan_setting = AUTO;
   target = 72;
-  
+
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
     sensors[i].nodeID = i;
   }
@@ -98,9 +101,20 @@ void setup() {
   setTime(DEFAULT_TIME);
 
   display.clear();
-  display.setBrightness(7);
+  display.setBrightness(4);
 
-  Serial.setTimeout(100); // Increase this if having issues 
+  eeAddress = 0;
+  eeAddress = readList(eeAddress, schedule_wend_cool_start);
+  eeAddress = readList(eeAddress, schedule_wend_cool_temp);
+
+  eeAddress = readList(eeAddress, schedule_wday_cool_start);
+  eeAddress = readList(eeAddress, schedule_wday_cool_temp);
+
+  eeAddress = readList(eeAddress, schedule_wend_heat_start);
+  eeAddress = readList(eeAddress, schedule_wend_heat_temp);
+
+  eeAddress = readList(eeAddress, schedule_wday_heat_start);
+  eeAddress = readList(eeAddress, schedule_wday_heat_temp);
 }
 
 void loop() {
@@ -133,6 +147,7 @@ void loop() {
   
   // Checking for computer input
   bool computer_input = false;
+  bool new_schedule = false;
   while (Serial.available() != 0) {
     digitalWrite(COMMUNICATION_LIGHT, HIGH);
     computer_input = true;
@@ -153,6 +168,7 @@ void loop() {
         setTime(Serial.parseInt());
         break;
       case 'S':
+        new_schedule = true;
         char header2;
         char header3;
         while (Serial.available() < 2) {}
@@ -271,7 +287,22 @@ void loop() {
     digitalWrite(COMMUNICATION_LIGHT, LOW);
     Serial.println();
   }
+  
+  if (new_schedule) {
+    eeAddress = 0;
+    eeAddress = writeList(eeAddress, schedule_wend_cool_start);
+    eeAddress = writeList(eeAddress, schedule_wend_cool_temp);
 
+    eeAddress = writeList(eeAddress, schedule_wday_cool_start);
+    eeAddress = writeList(eeAddress, schedule_wday_cool_temp);
+
+    eeAddress = writeList(eeAddress, schedule_wend_heat_start);
+    eeAddress = writeList(eeAddress, schedule_wend_heat_temp);
+
+    eeAddress = writeList(eeAddress, schedule_wday_heat_start);
+    eeAddress = writeList(eeAddress, schedule_wday_heat_temp);
+  }
+  
   // Checking schedule for target temperature
   if (timeStatus() == timeNotSet) {
       digitalWrite(ERROR_LIGHT, HIGH);
@@ -451,4 +482,22 @@ bool ac_on() {
   } else {
     return false;
   }
+}
+
+int writeList(int eeAddress, float ary[MAX_SCHEDULED_EVENTS]) {
+  int incr = sizeof(float);
+  for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+    EEPROM.put(eeAddress, ary[i]);
+    eeAddress+=incr;
+  }
+  return eeAddress;
+}
+
+int readList(int eeAddress, float ary[MAX_SCHEDULED_EVENTS]) {
+  int incr = sizeof(float);
+  for (int i = 0; i < MAX_SCHEDULED_EVENTS; i++) {
+    EEPROM.get(eeAddress, ary[i]);
+    eeAddress+=incr;
+  }
+  return eeAddress;
 }

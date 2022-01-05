@@ -33,3 +33,12 @@ code {
 .controls {
   margin: 10px;
 }
+
+
+/* Fix the below as per: https://ricardozea.medium.com/how-to-remove-the-blue-border-outline-in-chrome-safari-and-dotted-line-in-firefox-edge-fe5e2155d44c */
+a { 
+  border:0; 
+  outline:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+}
