@@ -8,7 +8,7 @@ import { Spinner } from 'react-bootstrap';
 
 class SensorData extends React.Component {
 
-  state = {tempData: this.props.tempData, isLoading: false}
+  state = {sensorData: this.props.sensorData, isLoading: false}
 
   refreshData = async () => {
     this.setState({isLoading: true});
@@ -16,7 +16,7 @@ class SensorData extends React.Component {
       const response = await fetch('http://192.168.1.32:5000/thermostat/mode');
       const data = await response.json();
       this.setState({ 
-        tempData: data.temperatures,
+        sensorData: data.sensors,
         isLoading: false 
       });
     } catch (error) {
@@ -27,21 +27,32 @@ class SensorData extends React.Component {
 
   renderDataState = () => (
     <>
-      {this.state.tempData.map((value, index) => {
-        return <p key={index}>Sensor {index} temperature: {value}˚F</p>
+      {this.state.sensorData.map((sensorObj, index) => {
+        return (
+        <p key={index}><h6>Sensor {index}: </h6>
+          Temperature: {sensorObj.temperature}˚F 
+          <br/>Humidity: {sensorObj.humidity}%
+          <br/>Heat Index: {sensorObj.heat_idx}˚F 
+        </p>
+        )
       })}
       {/* TODO: Make the average temp null if there is no data */}
-      <p>Average temperature: {(lodash.sum(this.state.tempData) / this.state.tempData.length).toFixed(2)}˚F</p>
+      {/* <p>Average temperature: {(lodash.sum(this.state.sensorData) / this.state.sensorData.length).toFixed(2)}˚F</p> */}
     </>
   );
 
   renderLoadingState = () => (
     <>
-      {this.state.tempData.map((value, index) => {
-        return <p key={index}>Sensor {index} temperature: <Spinner animation="border" size="sm" />˚F</p>
+      {this.state.sensorData.map((sensorObj, index) => {
+        return (
+        <p key={index}><h6>Sensor {index}: </h6>
+          Temperature: <Spinner animation="border" size="sm" />˚F 
+          <br/>Humidity: <Spinner animation="border" size="sm" />%
+          <br/>Heat Index: <Spinner animation="border" size="sm" />˚F 
+        </p>
+        )
       })}
-      {/* TODO: Make the average temp null if there is no data */}
-      <p>Average temperature: <Spinner animation="border" size="sm" />˚F</p>
+      {/* <p>Average temperature: {(lodash.sum(this.state.sensorData) / this.state.sensorData.length).toFixed(2)}˚F</p> */}
     </>
   );
 
@@ -62,7 +73,7 @@ class SensorData extends React.Component {
 }
 
 SensorData.propTypes = {
-  tempData: PropTypes.array.isRequired
+  sensorData: PropTypes.array.isRequired
 }
 
 export default SensorData;

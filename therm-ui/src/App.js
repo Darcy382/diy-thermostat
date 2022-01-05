@@ -24,7 +24,6 @@ class App extends React.Component {
   renderCardsData() {
     return (
       <>
-      <SensorData tempData={this.state.data.temperatures}/>
       <ThermostatModes radioValue={this.state.data.mode}/>
       <ScheduleCard 
         weekdayScheduleCool={this.state.data.weekdayScheduleCool}
@@ -32,6 +31,7 @@ class App extends React.Component {
         weekdayScheduleHeat={this.state.data.weekdayScheduleHeat}
         weekendScheduleHeat={this.state.data.weekendScheduleHeat}
       />
+      <SensorData sensorData={this.state.data.sensors}/>
       <AdvancedCard />
       </>
     )

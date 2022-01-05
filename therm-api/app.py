@@ -97,7 +97,7 @@ if not TEST_MODE:
                     sensorObj["humidity"] = (humidity)
                     heat_idx, result = parseFloat(result)
                     sensorObj["heat_idx"] = (heat_idx)
-                    response.append(sensorObj)
+                    response["sensors"].append(sensorObj)
             elif char == "M":
                 mode, result = parseInt(result)
                 response["mode"] = mode
@@ -195,4 +195,3 @@ def getSensorLogging():
 
 if __name__ == "__main__":
     app.run(host='192.168.1.32', threaded=False)
-    # app.run(host='192.168.1.32', threaded=True)
