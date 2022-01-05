@@ -1,5 +1,6 @@
 Thermostat input and output:
 M<int> = Thermostat mode
+F<int> = Fan setting
 T<long> = Thermostat time, in unix
 
 S = Schedule, must be followed 1st by:

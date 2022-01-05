@@ -18,7 +18,8 @@
 #define MAX_SCHEDULED_EVENTS 4
 #define ERROR_LIGHT A3
 
-enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
+enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2 };
+enum Fan_setting_name { AUTO=0, ALWAYS_ON=1};
 enum Power_state { OFF, ON };
 float bound = 1;
 const unsigned long DEFAULT_TIME = 1640897447;
@@ -56,8 +57,10 @@ float schedule_wday_heat_start[MAX_SCHEDULED_EVENTS] = {7, 8, 16, 21};
 float schedule_wday_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
 
 int thermostat_state;
+int fan_setting;
 float target;
 float avg_temp;
+
 PayloadStruct sensors[NUM_TEMP_SENSORS];
 bool received_all_temps;  
 
@@ -65,6 +68,7 @@ void setup() {
   Serial.begin(9600);
   
   thermostat_state = THERM_OFF;
+  fan_setting = AUTO;
   target = 72;
   
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
@@ -141,6 +145,9 @@ void loop() {
         break;
       case 'M':
         thermostat_state = Serial.parseInt();
+        break;
+      case 'F':
+        fan_setting = Serial.parseInt();
         break;
       case 'T':
         setTime(Serial.parseInt());
@@ -223,6 +230,10 @@ void loop() {
     // Print out the thermostat mode 
     Serial.write("M");
     Serial.print(thermostat_state);
+
+    // Print out the fan setting mode 
+    Serial.write("F");
+    Serial.print(fan_setting);
 
     // Print out the current time
     Serial.write("T");
@@ -317,13 +328,9 @@ void loop() {
     case HEAT :
       digitalWrite(HEAT_MODE_LIGHT, HIGH);
       digitalWrite(COOL_MODE_LIGHT, LOW);
-      digitalWrite(FAN_MODE_LIGHT, LOW);
       
       if (ac_on()) {
         turn_ac(OFF);
-      }
-      if (fan_on()) {
-        turn_fan(OFF);
       }
 
       if (!heater_on() && avg_temp < target - bound) {
@@ -334,48 +341,24 @@ void loop() {
       }
       break;
     case COOL:
-      // TODO: Turn the fan off when fan mode exited?
       digitalWrite(HEAT_MODE_LIGHT, LOW);
       digitalWrite(COOL_MODE_LIGHT, HIGH);
-      digitalWrite(FAN_MODE_LIGHT, LOW);
 
       if (heater_on()) {
         turn_heater(OFF);
       }
 
       if (!ac_on() && avg_temp > target + bound) {
-        turn_fan(ON);
         turn_ac(ON);
       }
       else if (ac_on() && avg_temp < target - bound) {
-        turn_fan(OFF);
         turn_ac(OFF);
-      }
-      break;
-    case FAN :
-      digitalWrite(HEAT_MODE_LIGHT, LOW);
-      digitalWrite(COOL_MODE_LIGHT, LOW);
-      digitalWrite(FAN_MODE_LIGHT, HIGH);
-      
-      if (heater_on()) {
-        turn_heater(OFF);
-      }
-      if (ac_on()) {
-        turn_ac(OFF);
-      }
-      
-      if(!fan_on()) {
-        turn_fan(ON);
       }
       break;
     case THERM_OFF :
       digitalWrite(HEAT_MODE_LIGHT, LOW);
       digitalWrite(COOL_MODE_LIGHT, LOW);
-      digitalWrite(FAN_MODE_LIGHT, LOW);
-
-      if (fan_on()) {
-        turn_fan(OFF);
-      }
+      
       if (heater_on()) {
         turn_heater(OFF);
       }
@@ -388,6 +371,28 @@ void loop() {
       // The Thermostat is in an invalid state
       break;
   }
+  switch (fan_setting)
+  {
+  case ALWAYS_ON:
+    digitalWrite(FAN_MODE_LIGHT, HIGH);
+    if (!fan_on()) {
+      turn_fan(ON);
+    }
+    break;
+  case AUTO:
+    digitalWrite(FAN_MODE_LIGHT, LOW);
+    if (ac_on()) {
+      turn_fan(ON);
+    } else {
+      turn_fan(OFF);
+    }
+    break;
+  default:
+    digitalWrite(ERROR_LIGHT, HIGH);
+    // The fan setting is invalid
+    break;
+  }
+
   delay(1000);
 }
 

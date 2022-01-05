@@ -49,6 +49,7 @@ if not TEST_MODE:
     def ping_arduino(send_data):
         signal_chars = {
             "mode": 'M',
+            "fanSetting": 'F',
             "time": 'T',
             WEEKDAY_SCHEDULE_COOL: 'SCD',
             WEEKEND_SCHEDULE_COOL: 'SCE',
@@ -62,6 +63,9 @@ if not TEST_MODE:
         for key, value in send_data.items():
             if key in signal_chars:
                 if key == "mode":
+                    serial_print(signal_chars[key])
+                    serial_print(value)
+                elif key == "fanSetting":
                     serial_print(signal_chars[key])
                     serial_print(value)
                 elif key == "time" and value == True:
@@ -101,6 +105,9 @@ if not TEST_MODE:
             elif char == "M":
                 mode, result = parseInt(result)
                 response["mode"] = mode
+            elif char == "F":
+                fanSetting, result = parseInt(result)
+                response["fanSetting"] = fanSetting
             elif char == "T":
                 arduino_time, result = parseInt(result)
                 response["time"] = arduino_time
