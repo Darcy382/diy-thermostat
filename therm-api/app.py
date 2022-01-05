@@ -1,8 +1,9 @@
-from flask import Flask, request, send_file, send_from_directory, safe_join, abort
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 import serial
 import time
 import json
+from constants import *
 
 NUM_TEMP_SENSORS = 2
 MAX_SCHEDULED_EVENTS = 4
@@ -13,87 +14,6 @@ CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.config["CSV_SERVICE"] = "/Users/kyledarcy/dev/diy-thermostat/csv-service"
 
-test_data = {
-    "temperatures": [
-        68.9,
-        70.88
-    ],
-    "mode": 1,
-    "time": 1640882022,
-    "weekdayScheduleCool": [
-        {
-            "start": 7.0,
-            "temp": 70.0
-        },
-        {
-            "start": 8.0,
-            "temp": 75.0
-        },
-        {
-            "start": 16.0,
-            "temp": 72.0
-        },
-        {
-            "start": 21.0,
-            "temp": 73.0
-        }
-    ],
-    "weekendScheduleCool": [
-        {
-            "start": 7.0,
-            "temp": 70.0
-        },
-        {
-            "start": 8.0,
-            "temp": 75.0
-        },
-        {
-            "start": 6.0,
-            "temp": 72.0
-        },
-        {
-            "start": 21.0,
-            "temp": 777.0
-        }
-    ],
-    "weekdayScheduleHeat": [
-        {
-            "start": 7.0,
-            "temp": 72.0
-        },
-        {
-            "start": 8.0,
-            "temp": 68.0
-        },
-        {
-            "start": 16.0,
-            "temp": 70.0
-        },
-        {
-            "start": 21.0,
-            "temp": 65.0
-        }
-    ],
-    "weekendScheduleHeat": [
-        {
-            "start": 7.4,
-            "temp": 72.0
-        },
-        {
-            "start": 8.0,
-            "temp": 62.0
-        },
-        {
-            "start": 16.0,
-            "temp": 71.0
-        },
-        {
-            "start": 21.0,
-            "temp": 999.0
-        }
-    ]
-}
-
 TEST_MODE = False
 
 if not TEST_MODE: 
@@ -101,7 +21,7 @@ if not TEST_MODE:
 
     def serial_print(string):
         encoded = str(string).encode('utf-8')
-        arduino.write(str(string).encode('utf-8'))
+        arduino.write(encoded)
 
     def serial_read():
         return arduino.read().decode('utf-8')
@@ -130,10 +50,10 @@ if not TEST_MODE:
         signal_chars = {
             "mode": 'M',
             "time": 'T',
-            "weekdayScheduleCool": 'SCD',
-            "weekendScheduleCool": 'SCE',
-            "weekdayScheduleHeat": 'SHD',
-            "weekendScheduleHeat": 'SHE',
+            WEEKDAY_SCHEDULE_COOL: 'SCD',
+            WEEKEND_SCHEDULE_COOL: 'SCE',
+            WEEKDAY_SCHEDULE_HEAT: 'SHD',
+            WEEKEND_SCHEDULE_HEAT: 'SHE',
         }
 
         if len(send_data) == 0:
@@ -156,6 +76,7 @@ if not TEST_MODE:
                         serial_print(' ')
                         serial_print("{:.2f}".format(value[i]["temp"]))
                     # TODO: write null for the remaining 4 temperatures if they exist
+        serial_print("*") # Marks the end of transmission to arduino
 
         while arduino.in_waiting == 0:
             pass
@@ -167,10 +88,16 @@ if not TEST_MODE:
         while len(result) > 0:
             char = result[0]
             if char == "C":
-                response["temperatures"] = []
+                response["sensors"] = []
                 for i in range(NUM_TEMP_SENSORS):
+                    sensorObj = {}
                     temp, result = parseFloat(result)
-                    response["temperatures"].append(temp)
+                    sensorObj["temperature"] = (temp)
+                    humidity, result = parseFloat(result)
+                    sensorObj["humidity"] = (humidity)
+                    heat_idx, result = parseFloat(result)
+                    sensorObj["heat_idx"] = (heat_idx)
+                    response.append(sensorObj)
             elif char == "M":
                 mode, result = parseInt(result)
                 response["mode"] = mode
@@ -182,20 +109,20 @@ if not TEST_MODE:
                 char3 = result[2]
                 if char2 == "C":
                     if char3 == "D":
-                        response["weekdayScheduleCool"] = []
+                        response[WEEKDAY_SCHEDULE_COOL] = []
                         for i in range(MAX_SCHEDULED_EVENTS):
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
-                            response["weekdayScheduleCool"].append({
+                            response[WEEKDAY_SCHEDULE_COOL].append({
                                 "start": start,
                                 "temp": temp
                             })
                     elif char3 == "E":
-                        response["weekendScheduleCool"] = []
+                        response[WEEKEND_SCHEDULE_COOL] = []
                         for i in range(MAX_SCHEDULED_EVENTS):
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
-                            response["weekendScheduleCool"].append({
+                            response[WEEKEND_SCHEDULE_COOL].append({
                                 "start": start,
                                 "temp": temp
                             })
@@ -203,20 +130,20 @@ if not TEST_MODE:
                         raise Exception
                 elif char2 == "H":
                     if char3 == "D":
-                        response["weekdayScheduleHeat"] = []
+                        response[WEEKDAY_SCHEDULE_HEAT] = []
                         for i in range(MAX_SCHEDULED_EVENTS):
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
-                            response["weekdayScheduleHeat"].append({
+                            response[WEEKDAY_SCHEDULE_HEAT].append({
                                 "start": start,
                                 "temp": temp
                             })
                     elif char3 == "E":
-                        response["weekendScheduleHeat"] = []
+                        response[WEEKEND_SCHEDULE_HEAT] = []
                         for i in range(MAX_SCHEDULED_EVENTS):
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
-                            response["weekendScheduleHeat"].append({
+                            response[WEEKEND_SCHEDULE_HEAT].append({
                                 "start": start,
                                 "temp": temp
                             })
@@ -225,12 +152,10 @@ if not TEST_MODE:
                 else:
                     raise Exception
             elif char=="e":
-                print("Exception: ")
                 errorCode, result = parseInt(result)
-                print(result)
-                print(errorCode)
-                return result
+                print(f"Arduino Error code # {errorCode} has occurred")
             else:
+                # TODO: Add better checking for unknown letters here
                 result = result[1:]
             
         return app.response_class(

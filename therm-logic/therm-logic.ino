@@ -21,7 +21,7 @@
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2, FAN=3 };
 enum Power_state { OFF, ON };
 float bound = 1;
-const unsigned long DEFAULT_TIME = 1640897447 - 18000;
+const unsigned long DEFAULT_TIME = 1640897447;
 
 RF24 radio(7, 8); // CE, CSN
 TM1637Display display = TM1637Display(CLK, DIO);
@@ -58,7 +58,7 @@ float schedule_wday_heat_temp[MAX_SCHEDULED_EVENTS] = {72, 68, 70, 65};
 int thermostat_state;
 float target;
 float avg_temp;
-float temperatures[NUM_TEMP_SENSORS];
+PayloadStruct sensors[NUM_TEMP_SENSORS];
 bool received_all_temps;  
 
 void setup() {
@@ -66,6 +66,10 @@ void setup() {
   
   thermostat_state = THERM_OFF;
   target = 72;
+  
+  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
+    sensors[i].nodeID = i;
+  }
 
   pinMode(FAN_PIN, OUTPUT);
   pinMode(AC_PIN, OUTPUT);
@@ -84,38 +88,39 @@ void setup() {
   radio.setPALevel(RF24_PA_MAX);
   radio.startListening();
 
-  // setSyncProvider( requestSync); Not sure what this does
+  // Implement an automatic time sync?
+  // setSyncProvider( requestSync);
 
   setTime(DEFAULT_TIME);
 
   display.clear();
   display.setBrightness(7);
 
-  Serial.setTimeout(100); // Set to 100 or 1000 if having issues
+  Serial.setTimeout(100); // Increase this if having issues 
 }
 
 void loop() {
-  // Receiving temperatures from all sensors
+  // Receiving data from all sensors
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    temperatures[i] = NULL;
+    sensors[i].temperature = NULL;
+    sensors[i].humidity = NULL;
+    sensors[i].heat_idx = NULL;
   }
   digitalWrite(RADIO_LIGHT, HIGH);
   received_all_temps = false;
-
   while (!received_all_temps) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
       if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
-        temperatures[payload.nodeID] = payload.temperature;
+        sensors[payload.nodeID] = payload;
       } else {
           digitalWrite(ERROR_LIGHT, HIGH);
           // An invalid nodeID has been received
       }
     }
-
     received_all_temps = true;
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-      if (temperatures[i] == NULL) {
+      if (sensors[i].temperature == NULL) {
         received_all_temps = false;
       }
     }
@@ -131,6 +136,8 @@ void loop() {
     switch (header)
     {
       case 'P':
+        break;
+      case '*':
         break;
       case 'M':
         thermostat_state = Serial.parseInt();
@@ -162,7 +169,6 @@ void loop() {
               default:
                 Serial.write("e");
                 Serial.print(1);
-                Serial.print(" ");
                 digitalWrite(ERROR_LIGHT, HIGH);
                 break;
             }
@@ -181,15 +187,13 @@ void loop() {
               default:
                 Serial.print("e");
                 Serial.print(2);
-                Serial.print(" ");
                 digitalWrite(ERROR_LIGHT, HIGH);
                 break;
             }
             break;
           default:
-            Serial.print(header);
-            Serial.print(header2);
-            Serial.print(header3);
+            Serial.print("e");
+            Serial.print(3);
             digitalWrite(ERROR_LIGHT, HIGH);
             break;
         }
@@ -201,18 +205,20 @@ void loop() {
       default:
         Serial.print("e");
         Serial.print(4);
-        Serial.print(" ");
         digitalWrite(ERROR_LIGHT, HIGH);
         break;
     }
   }
   if (computer_input) {
-    // TODO: Print out return information in the Serial
     // Print out the current temp sensor readings T 12 12 12 12
     Serial.write("C");
     for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
       Serial.write(" ");
-      Serial.print(temperatures[i], 2);
+      Serial.print(sensors[i].temperature, 2);
+      Serial.write(" ");
+      Serial.print(sensors[i].humidity, 2);
+      Serial.write(" ");
+      Serial.print(sensors[i].heat_idx, 2);
     }
     // Print out the thermostat mode 
     Serial.write("M");
@@ -292,7 +298,6 @@ void loop() {
   while (
     current_schedule_start != NULL &&
     i < MAX_SCHEDULED_EVENTS &&
-    current_schedule_start[i] != NULL &&
     current_hours >= current_schedule_start[i]
   ) {
     target = current_schedule_temp[i]; 
@@ -300,11 +305,10 @@ void loop() {
   }
   display.showNumberDec(target, false);
 
-
   // Calculating average temperature
   float sum = 0;
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    sum += temperatures[i];
+    sum += sensors[i].temperature;
   }
   avg_temp = sum / NUM_TEMP_SENSORS;
 
@@ -393,8 +397,8 @@ void turn_fan(Power_state power_state) {
   } else if (power_state == OFF) {
     digitalWrite(FAN_PIN, LOW);
   } else {
-    // Turn on error light
     // Invalid power state
+    digitalWrite(ERROR_LIGHT, HIGH);
   }
 }
 
@@ -404,8 +408,8 @@ void turn_heater(Power_state power_state) {
   } else if (power_state == OFF) {
     digitalWrite(HEATER_PIN, LOW);
   } else {
-    // Turn on error light
     // Invalid power state
+    digitalWrite(ERROR_LIGHT, HIGH);
   }
 }
 
@@ -415,8 +419,8 @@ void turn_ac(Power_state power_state) {
   } else if (power_state == OFF) {
     digitalWrite(AC_PIN, LOW);
   } else {
-    // Turn on error light
     // Invalid power state
+    digitalWrite(ERROR_LIGHT, HIGH);
   }
 }
 
