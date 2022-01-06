@@ -243,6 +243,14 @@ void loop() {
       Serial.write(" ");
       Serial.print(sensors[i].heat_idx, 2);
     }
+
+    // Print out the relay states
+    Serial.write("R");
+    Serial.print(heater_on());
+    Serial.write(" ");
+    Serial.print(ac_on());
+    Serial.write(" ");
+    Serial.print(fan_on());
     // Print out the thermostat mode 
     Serial.write("M");
     Serial.print(thermostat_state);

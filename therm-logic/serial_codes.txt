@@ -19,7 +19,7 @@ process by skipping the timeout
 Thermostat output only:
 e<int> = error code <int>
 C( <float: temp> <float: humidity> <float: heat_idx>)*NUM_TEMP_SENSORS
-
+R <int:heat relay state> <int:ac relay state> <int:fan relay state>
 
 ** NOTE: The parentheses used in format are only to aid with representation,
 they are not included when writing data to the serial.  For example, 

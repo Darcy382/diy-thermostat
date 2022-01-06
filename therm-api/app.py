@@ -102,6 +102,13 @@ if not TEST_MODE:
                     heat_idx, result = parseFloat(result)
                     sensorObj["heat_idx"] = (heat_idx)
                     response["sensors"].append(sensorObj)
+            elif char == "R":
+                heatRelay, result = parseInt(result)
+                response["heatRelay"] = heatRelay
+                acRelay, result = parseInt(result)
+                response["acRelay"] = acRelay
+                fanRelay, result = parseInt(result)
+                response["fanRelay"] = fanRelay
             elif char == "M":
                 mode, result = parseInt(result)
                 response["mode"] = mode
