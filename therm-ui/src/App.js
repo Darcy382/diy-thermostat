@@ -13,7 +13,7 @@ class App extends React.Component {
 
   async componentDidMount() {
     try {
-      const response = await fetch('http://192.168.1.32:5000/thermostat/mode');
+      const response = await fetch('http://192.168.1.25:5000/thermostat/mode');
       const data = await response.json();
       this.setState({ data: data, isLoading: false });
     } catch (error) {

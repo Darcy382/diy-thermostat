@@ -51,7 +51,7 @@ def log_fields():
 
 # log_fields()
 while True:
-    arduino_data = requests.get("http://192.168.1.32:5000/thermostat/mode").json()
+    arduino_data = requests.get("http://192.168.1.25:5000/thermostat/mode").json()
     weather_data = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}").json()["current"]
     log = []
     log.append(((time.time()-18000) / 86400) + 25569)

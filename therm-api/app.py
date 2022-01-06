@@ -17,7 +17,7 @@ app.config["CSV_SERVICE"] = "/Users/kyledarcy/dev/diy-thermostat/csv-service"
 TEST_MODE = False
 
 if not TEST_MODE: 
-    arduino = serial.Serial(port='/dev/cu.usbmodem1101', baudrate=9600, timeout=.1)
+    arduino = serial.Serial(port='/dev/cu.usbmodem14201', baudrate=9600, timeout=.1)
 
     def serial_print(string):
         encoded = str(string).encode('utf-8')
@@ -208,4 +208,4 @@ def getSensorLogging():
 
 
 if __name__ == "__main__":
-    app.run(host='192.168.1.32', threaded=False)
+    app.run(host='192.168.1.25', threaded=False)

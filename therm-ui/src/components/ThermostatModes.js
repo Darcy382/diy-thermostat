@@ -25,7 +25,7 @@ class ThermostatModes extends React.Component {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode, "time": true })
       };
-      const response = await fetch('http://192.168.1.32:5000/thermostat/mode', requestOptions);
+      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
       const data = await response.json();
       this.setState({ thermMode: data.mode, isLoading: false });
       NotificationManager.success("Success", "", 1000);
@@ -43,7 +43,7 @@ class ThermostatModes extends React.Component {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 'fanSetting': setting })
       };
-      const response = await fetch('http://192.168.1.32:5000/thermostat/mode', requestOptions);
+      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
       const data = await response.json();
       this.setState({ fanSetting: data.fanSetting, isLoading: false });
       NotificationManager.success("Success", "", 1000);

@@ -49,7 +49,7 @@ class ScheduleCard extends React.Component {
           "time": true 
         })
       };
-      const response = await fetch('http://192.168.1.32:5000/thermostat/mode', requestOptions);
+      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
       const data = await response.json();
       this.setState({ 
         weekdayScheduleHeat: data.weekdayScheduleHeat, 

@@ -8,7 +8,7 @@ class AdvancedCard extends React.Component {
   downloadFile = async () => {
     this.setState({isLoading: true})
     try {
-      const response = await fetch('http://192.168.1.32:5000/thermostat/logging');
+      const response = await fetch('http://192.168.1.25:5000/thermostat/logging');
       // const data = await response.json();
       this.setState({ 
         isLoading: false 
@@ -32,7 +32,7 @@ class AdvancedCard extends React.Component {
           </Button>
         ) :
         (
-          <a href="http://192.168.1.32:5000/thermostat/logging" class="btn btn-primary" role="button">
+          <a href="http://192.168.1.25:5000/thermostat/logging" class="btn btn-primary" role="button">
             Download Thermostat logging csv file
           </a>
           )
