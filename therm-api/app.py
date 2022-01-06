@@ -4,6 +4,7 @@ import serial
 import time
 import json
 from constants import *
+from user_settings import path
 
 NUM_TEMP_SENSORS = 2
 MAX_SCHEDULED_EVENTS = 4
@@ -12,7 +13,7 @@ app = Flask(__name__)
 CORS(app)
 
 app.config['CORS_HEADERS'] = 'Content-Type'
-app.config["CSV_SERVICE"] = "/Users/kyledarcy/dev/diy-thermostat/csv-service"
+app.config["CSV_SERVICE"] = path
 
 TEST_MODE = False
 

@@ -5,7 +5,6 @@ from user_settings import api_key, lat, lon
 
 NUM_TEMP_SENSORS = 2
 
-filename = "university_records.csv"
 getThermostatMode = {
     0: "OFF",
     1: "HEAT",
