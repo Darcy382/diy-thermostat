@@ -1,3 +1,4 @@
 venv/
 user_settings.py
 __pycache__/
+thermostat_data.csv
