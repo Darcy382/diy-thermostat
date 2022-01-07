@@ -52,7 +52,7 @@ log_fields(fields)
 
 counter = 0
 while True:
-    log_entry = defaultdict(None)
+    log_entry = defaultdict()
     log_entry[ERROR_MESSAGES] = []
     time_sync = counter % TIME_SYNC_PERIOD == 0
     # advanced_weather_call = counter % ADVANCED_WEATHER_PERIOD == 0
