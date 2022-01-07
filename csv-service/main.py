@@ -43,7 +43,7 @@ def get_fields():
     fields.append(OUTDOOR_CLOUDS)
     fields.append(ERROR_MESSAGES)
     return fields
-    
+
 def log_fields(fields):
     logging.warning(toCsv(fields))
 
@@ -58,14 +58,14 @@ while True:
     advanced_weather_call = False
     try:
         if time_sync:
-            arduino_request = requests.get(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}")
+            arduino_request = requests.post(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}", json={"time": True})
             counter = 0
-        else: 
-            arduino_request = requests.push(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}", data={"time": True})
+        else:
+            arduino_request = requests.get(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}")
         if advanced_weather_call:
             weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}")
         else:
-            weather_request = requests.get(f"api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}")
+            weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}")
         log_entry[TIME] = ((time.time()-18000) / 86400) + 25569
         if (arduino_request.status_code == 200):
             arduino_data = arduino_request.json()
@@ -89,7 +89,7 @@ while True:
         if (weather_request.status_code == 200):
             if advanced_weather_call:
                 weather_data = weather_request.json().get("current", {})
-            else: 
+            else:
                 weather_data = weather_request.json().get("main", {})
             log_entry[OUTDOOR_TEMP] = ("{:.1f}".format(kelvinToF(weather_data.get("temp"))))
             log_entry[OUTDOOR_REAL_FEEL] = ("{:.1f}".format(kelvinToF(weather_data.get("feels_like"))))
