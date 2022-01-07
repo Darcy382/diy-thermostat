@@ -1,26 +1,21 @@
 import logging
 import time
 import requests
-from user_settings import api_key, lat, lon
+from user_settings import api_key, lat, lon, arduino_api_computer_address, city_id
+from constants import *
+from collections import defaultdict
 
 NUM_TEMP_SENSORS = 2
+ARDUINO_API_URL = "/thermostat/mode"
+# TIMEOUT = (3, 8) # (Seconds to establish connections, Seconds to server response)
+ADVANCED_WEATHER_PERIOD = 15
+TIME_SYNC_PERIOD = 720
 
-getThermostatMode = {
-    0: "OFF",
-    1: "HEAT",
-    2: "COOL"
-}
-getFanSetting = {
-    0: "AUTO",
-    1: "ALWAYS_ON"
-}
-POWER_STATE = {
-    0: "OFF",
-    1: "ON"
-}
 logging.basicConfig(filename='thermostat_data.csv', filemode='a', format='%(message)s')
 
 def kelvinToF(kelvinTemp):
+    if kelvinTemp is None:
+        return None
     return ((kelvinTemp - 273.15) * 1.8) + 32.0
 
 def toCsv(lst):
@@ -29,45 +24,90 @@ def toCsv(lst):
         output.append(str(item))
     return ",".join(output)
 
-def log_fields():
+def get_fields():
     fields = []
-    fields.append("Time")
-    fields.append("Thermostat Mode")
-    fields.append("Fan Setting")
-    fields.append("Heater Relay")
-    fields.append("AC Relay")
-    fields.append("Fan Relay")
+    fields.append(TIME)
+    fields.append(THERMOSTAT_MODE)
+    fields.append(FAN_SETTING)
+    fields.append(HEATER_RELAY)
+    fields.append(AC_RELAY)
+    fields.append(FAN_RELAY)
     for i in range(NUM_TEMP_SENSORS):
-        fields.append(f"Sensor {i} Temp")
-        fields.append(f"Sensor {i} Humidity")
-        fields.append(f"Sensor {i} Heat Index")
-    fields.append("Outdoor Temp")
-    fields.append("Outdoor Real feel")
-    fields.append("Outdoor Humidity")
-    fields.append("Outdoor UV Index")
-    fields.append("Outdoor Clouds")
+        fields.append(SENSOR_TEMP(i))
+        fields.append(SENSOR_HUMIDITY(i))
+        fields.append(SENSOR_HEAT_INDEX(i))
+    fields.append(OUTDOOR_TEMP)
+    fields.append(OUTDOOR_REAL_FEEL)
+    fields.append(OUTDOOR_HUMIDITY)
+    fields.append(OUTDOOR_UV_INDEX)
+    fields.append(OUTDOOR_CLOUDS)
+    fields.append(ERROR_MESSAGES)
+    
+def log_fields(fields):
     logging.warning(toCsv(fields))
 
-# log_fields()
+fields = get_fields()
+log_fields(fields)
+
+counter = 0
 while True:
-    arduino_data = requests.get("http://192.168.1.25:5000/thermostat/mode").json()
-    weather_data = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}").json()["current"]
-    log = []
-    log.append(((time.time()-18000) / 86400) + 25569)
-    log.append(getThermostatMode[arduino_data.get("mode")])
-    log.append(getFanSetting[arduino_data.get("fanSetting")])
-    log.append(POWER_STATE[arduino_data["heatRelay"]])
-    log.append(POWER_STATE[arduino_data["acRelay"]])
-    log.append(POWER_STATE[arduino_data["fanRelay"]])
-    sensor_data = arduino_data.get("sensors")
-    for sensor_obj in sensor_data:
-        log.append(sensor_obj.get("temperature"))
-        log.append(sensor_obj.get("humidity"))
-        log.append(sensor_obj.get("heat_idx"))
-    log.append("{:.1f}".format(kelvinToF(weather_data.get("temp"))))
-    log.append("{:.1f}".format(kelvinToF(weather_data.get("feels_like"))))
-    log.append(weather_data.get("humidity"))
-    log.append(weather_data.get("uvi"))
-    log.append(weather_data.get("clouds"))
-    logging.warning(toCsv(log))
+    log_entry = defaultdict(None)
+    log_entry[ERROR_MESSAGES] = []
+    time_sync = counter % TIME_SYNC_PERIOD == 0
+    # advanced_weather_call = counter % ADVANCED_WEATHER_PERIOD == 0
+    advanced_weather_call = False
+    try:
+        if time_sync:
+            arduino_request = requests.get(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}")
+            counter = 0
+        else: 
+            arduino_request = requests.push(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}", data={"time": True})
+        if advanced_weather_call:
+            weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}")
+        else:
+            weather_request = requests.get(f"api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}")
+        log_entry[TIME] = ((time.time()-18000) / 86400) + 25569
+        if (arduino_request.status_code == 200):
+            arduino_data = arduino_request.json()
+            log_entry[THERMOSTAT_MODE] = (getThermostatMode[arduino_data.get("mode")])
+            log_entry[FAN_SETTING] = (getFanSetting[arduino_data.get("fanSetting")])
+            log_entry[HEATER_RELAY] = (getPowerState[arduino_data.get("heatRelay")])
+            log_entry[AC_RELAY] = (getPowerState[arduino_data.get("acRelay")])
+            log_entry[FAN_RELAY] = (getPowerState[arduino_data.get("fanRelay")])
+            sensor_data = arduino_data.get("sensors")
+            i = 0
+            for sensor_obj in sensor_data:
+                log_entry[SENSOR_TEMP(i)] = (sensor_obj.get("temperature"))
+                log_entry[SENSOR_HUMIDITY(i)] = (sensor_obj.get("humidity"))
+                log_entry[SENSOR_HEAT_INDEX(i)] = (sensor_obj.get("heat_idx"))
+                i += 1
+        else:
+            error_message = f"Error with arduino api request, status code {arduino_request.status_code}"
+            log_entry[ERROR_MESSAGES].append(error_message)
+            print(error_message)
+
+        if (weather_request.status_code == 200):
+            if advanced_weather_call:
+                weather_data = weather_request.json().get("current", {})
+            else: 
+                weather_data = weather_request.json().get("main", {})
+            log_entry[OUTDOOR_TEMP] = ("{:.1f}".format(kelvinToF(weather_data.get("temp"))))
+            log_entry[OUTDOOR_REAL_FEEL] = ("{:.1f}".format(kelvinToF(weather_data.get("feels_like"))))
+            log_entry[OUTDOOR_HUMIDITY] = weather_data.get("humidity")
+            log_entry[OUTDOOR_UV_INDEX] = weather_data.get("uvi")
+            log_entry[OUTDOOR_CLOUDS] = weather_data.get("clouds")
+        else:
+            error_message = f"Error with open weather api request, status code {arduino_request.status_code}"
+            log_entry[ERROR_MESSAGES].append(error_message)
+            print(error_message)
+    except Exception as e:
+        error_message = "The following error has occurred: {e}"
+        log_entry[ERROR_MESSAGES].append(error_message)
+        print(error_message)
+        print(e)
+    log_output_list = []
+    for field in fields:
+        log_output_list.append(log_entry[field])
+    logging.warning(toCsv(log_output_list))
     time.sleep(15)
+    counter += 1
