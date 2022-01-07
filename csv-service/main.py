@@ -42,6 +42,7 @@ def get_fields():
     fields.append(OUTDOOR_UV_INDEX)
     fields.append(OUTDOOR_CLOUDS)
     fields.append(ERROR_MESSAGES)
+    return fields
     
 def log_fields(fields):
     logging.warning(toCsv(fields))
