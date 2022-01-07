@@ -52,8 +52,7 @@ log_fields(fields)
 
 counter = 0
 while True:
-    log_entry = defaultdict()
-    log_entry[ERROR_MESSAGES] = []
+    log_entry = {ERROR_MESSAGES: []}
     time_sync = counter % TIME_SYNC_PERIOD == 0
     # advanced_weather_call = counter % ADVANCED_WEATHER_PERIOD == 0
     advanced_weather_call = False
@@ -108,7 +107,7 @@ while True:
         print(e)
     log_output_list = []
     for field in fields:
-        log_output_list.append(log_entry[field])
+        log_output_list.append(log_entry.get(field))
     logging.warning(toCsv(log_output_list))
     time.sleep(15)
     counter += 1
