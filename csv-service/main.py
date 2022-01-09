@@ -54,8 +54,7 @@ counter = 0
 while True:
     log_entry = {ERROR_MESSAGES: []}
     time_sync = counter % TIME_SYNC_PERIOD == 0
-    # advanced_weather_call = counter % ADVANCED_WEATHER_PERIOD == 0
-    advanced_weather_call = False
+    advanced_weather_call = counter % ADVANCED_WEATHER_PERIOD == 0
     try:
         if time_sync:
             arduino_request = requests.post(f"http://{arduino_api_computer_address}{ARDUINO_API_URL}", json={"time": True})

@@ -4,7 +4,7 @@ import serial
 import time
 import json
 from constants import *
-from user_settings import path
+from user_settings import *
 
 NUM_TEMP_SENSORS = 2
 MAX_SCHEDULED_EVENTS = 4
@@ -15,9 +15,7 @@ CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.config["CSV_SERVICE"] = path
 
-TEST_MODE = False
-
-if not TEST_MODE: 
+if not test_mode: 
     arduino = serial.Serial(port='/dev/cu.usbmodem14201', baudrate=9600, timeout=.1)
 
     def serial_print(string):
@@ -80,11 +78,12 @@ if not TEST_MODE:
                         serial_print("{:.2f}".format(value[i]["start"]))
                         serial_print(' ')
                         serial_print("{:.2f}".format(value[i]["temp"]))
-                    # TODO: write null for the remaining 4 temperatures if they exist
+                    # TODO: write null for the remaining 4 temperatures if they don't exist
         serial_print("*") # Marks the end of transmission to arduino
 
-        while arduino.in_waiting == 0:
+        while arduino.in_waiting == 0: 
             pass
+
         response = {}
         arduino_response = arduino.readall()
         print(arduino_response)
@@ -102,6 +101,8 @@ if not TEST_MODE:
                     sensorObj["humidity"] = (humidity)
                     heat_idx, result = parseFloat(result)
                     sensorObj["heat_idx"] = (heat_idx)
+                    last_read_time, result = parseFloat(result)
+                    sensorObj["last_read_time"] = (last_read_time)
                     response["sensors"].append(sensorObj)
             elif char == "R":
                 heatRelay, result = parseInt(result)
@@ -181,7 +182,7 @@ if not TEST_MODE:
 
 @app.route('/thermostat/mode', methods = ['GET'])
 def set_therm_mode():
-    if not TEST_MODE:
+    if not test_mode:
         return ping_arduino({})
     else:
         time.sleep(1)
@@ -194,7 +195,7 @@ def set_therm_mode():
 @app.route('/thermostat/mode', methods = ['POST'])
 def get_therm_mode():
     # TODO: Check if the input is valid
-    if not TEST_MODE:
+    if not test_mode:
         return ping_arduino(request.json)
     else:
         time.sleep(1)
@@ -209,4 +210,4 @@ def getSensorLogging():
 
 
 if __name__ == "__main__":
-    app.run(host='192.168.1.25', threaded=False)
+    app.run(host=host_ip, threaded=False)

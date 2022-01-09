@@ -50,7 +50,7 @@ struct PayloadStruct {
 PayloadStruct payload;
 
 struct SensorReading {
-  long time;
+  long last_read_time;
   float temperature;
   float humidity;
   float heat_idx;
@@ -137,7 +137,7 @@ void loop() {
         sensors[payload.nodeID].temperature = payload.temperature;
         sensors[payload.nodeID].humidity = payload.humidity;
         sensors[payload.nodeID].heat_idx = payload.heat_idx;
-        sensors[payload.nodeID].time = now();
+        sensors[payload.nodeID].last_read_time = now();
         sensors_read.add(payload.nodeID);
       } else {
           digitalWrite(ERROR_LIGHT, HIGH);
@@ -247,6 +247,8 @@ void loop() {
       Serial.print(sensors[i].humidity, 2);
       Serial.write(" ");
       Serial.print(sensors[i].heat_idx, 2);
+      Serial.write(" ");
+      Serial.print(sensors[i].last_read_time, 2);
     }
 
     // Print out the relay states
@@ -366,7 +368,7 @@ void loop() {
   float sum = 0;
   int sensors_used = 0;
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    if ((now() - sensors[i].time) < 1200) {
+    if ((now() - sensors[i].last_read_time) < 1200) {
       if (use_real_feel) {
         sum += sensors[i].heat_idx;  
       } else {
