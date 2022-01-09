@@ -172,6 +172,9 @@ void loop() {
       case 'I':
         use_real_feel = Serial.parseInt();
         break;
+      case 'B':
+        bound = Serial.parseFloat();
+        break;
       case 'S':
         new_schedule = true;
         char header2;
@@ -273,7 +276,7 @@ void loop() {
     Serial.print(use_real_feel);
 
     Serial.write("B");
-    Serial.print(bound);
+    Serial.print(bound, 2);
 
     // Print out the current time
     Serial.write("T");
