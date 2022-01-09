@@ -248,7 +248,7 @@ void loop() {
       Serial.write(" ");
       Serial.print(sensors[i].heat_idx, 2);
       Serial.write(" ");
-      Serial.print(sensors[i].last_read_time, 2);
+      Serial.print(sensors[i].last_read_time);
     }
 
     // Print out the relay states
