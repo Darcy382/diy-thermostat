@@ -72,15 +72,15 @@ while True:
     log_entry[TIME] = ((time.time()-18000) / 86400) + 25569
     if (arduino_request.status_code == 200):
         arduino_data = arduino_request.json()
-        log_entry[THERMOSTAT_MODE] = (getThermostatMode[arduino_data.get("mode")])
-        log_entry[FAN_SETTING] = (getFanSetting[arduino_data.get("fanSetting")])
-        log_entry[HEATER_RELAY] = (getPowerState[arduino_data.get("heatRelay")])
-        log_entry[AC_RELAY] = (getPowerState[arduino_data.get("acRelay")])
-        log_entry[FAN_RELAY] = (getPowerState[arduino_data.get("fanRelay")])
-        log_entry[TEMPERATURE_BOUND] = (getPowerState[arduino_data.get("tempBound")])
-        log_entry[ARDUINO_TIME] = (getPowerState[arduino_data.get("time")])
-        log_entry[USE_REAL_FEEL] = (getPowerState[arduino_data.get("useRealFeel")])
-        log_entry[TEMP_SET_POINT] = (getPowerState[arduino_data.get("tempSetPoint")])
+        log_entry[THERMOSTAT_MODE] = getThermostatMode[arduino_data.get("mode")]
+        log_entry[FAN_SETTING] = getFanSetting[arduino_data.get("fanSetting")]
+        log_entry[HEATER_RELAY] = getPowerState[arduino_data.get("heatRelay")]
+        log_entry[AC_RELAY] = getPowerState[arduino_data.get("acRelay")]
+        log_entry[FAN_RELAY] = getPowerState[arduino_data.get("fanRelay")]
+        log_entry[TEMPERATURE_BOUND] = arduino_data.get("tempBound")
+        log_entry[ARDUINO_TIME] = arduino_data.get("time")
+        log_entry[USE_REAL_FEEL] = getPowerState[arduino_data.get("useRealFeel")]
+        log_entry[TEMP_SET_POINT] = arduino_data.get("tempSetPoint")
         sensor_data = arduino_data.get("sensors")
         i = 0
         for sensor_obj in sensor_data:
