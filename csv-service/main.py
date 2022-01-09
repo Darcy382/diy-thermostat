@@ -3,7 +3,6 @@ import time
 import requests
 from user_settings import api_key, lat, lon, arduino_api_computer_address, city_id
 from constants import *
-from collections import defaultdict
 
 NUM_TEMP_SENSORS = 2
 ARDUINO_API_URL = "/thermostat/mode"
@@ -48,7 +47,7 @@ def log_fields(fields):
     logging.warning(toCsv(fields))
 
 fields = get_fields()
-log_fields(fields)
+# log_fields(fields)
 
 counter = 0
 while True:
