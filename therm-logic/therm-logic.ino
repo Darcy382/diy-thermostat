@@ -258,6 +258,7 @@ void loop() {
     Serial.print(ac_on());
     Serial.write(" ");
     Serial.print(fan_on());
+
     // Print out the thermostat mode 
     Serial.write("M");
     Serial.print(thermostat_state);
@@ -270,6 +271,10 @@ void loop() {
 
     Serial.write("I");
     Serial.print(use_real_feel);
+
+    Serial.write("B");
+    Serial.print(bound);
+
     // Print out the current time
     Serial.write("T");
     Serial.print(now());

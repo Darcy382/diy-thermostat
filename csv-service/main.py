@@ -12,6 +12,9 @@ TIME_SYNC_PERIOD = 720
 
 logging.basicConfig(filename='thermostat_data.csv', filemode='w', format='%(message)s')
 
+def unix_to_excel_time(unix_time):
+    return ((unix_time-18000) / 86400) + 25569
+
 def kelvinToF(kelvinTemp):
     if kelvinTemp is None:
         return None
@@ -69,7 +72,7 @@ while True:
             weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}")
         else:
             weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}")
-        log_entry[TIME] = ((time.time()-18000) / 86400) + 25569
+        log_entry[TIME] = unix_to_excel_time(time.time())
         if (arduino_request.status_code == 200):
             arduino_data = arduino_request.json()
             log_entry[THERMOSTAT_MODE] = getThermostatMode[arduino_data.get("mode")]
@@ -78,7 +81,7 @@ while True:
             log_entry[AC_RELAY] = getPowerState[arduino_data.get("acRelay")]
             log_entry[FAN_RELAY] = getPowerState[arduino_data.get("fanRelay")]
             log_entry[TEMPERATURE_BOUND] = arduino_data.get("tempBound")
-            log_entry[ARDUINO_TIME] = arduino_data.get("time")
+            log_entry[ARDUINO_TIME] = unix_to_excel_time(arduino_data.get("time"))
             log_entry[USE_REAL_FEEL] = getPowerState[arduino_data.get("useRealFeel")]
             log_entry[TEMP_SET_POINT] = arduino_data.get("tempSetPoint")
             sensor_data = arduino_data.get("sensors")
@@ -87,7 +90,7 @@ while True:
                 log_entry[SENSOR_TEMP(i)] = sensor_obj.get("temperature")
                 log_entry[SENSOR_HUMIDITY(i)] = sensor_obj.get("humidity")
                 log_entry[SENSOR_HEAT_INDEX(i)] = sensor_obj.get("heat_idx")
-                log_entry[SENSOR_LAST_READ(i)] = sensor_obj.get("last_read_time")
+                log_entry[SENSOR_LAST_READ(i)] = unix_to_excel_time(sensor_obj.get("last_read_time"))
                 i += 1
         else:
             error_message = f"Error with arduino api request, status code {arduino_request.status_code}"
