@@ -3,6 +3,7 @@ M<int> = Thermostat mode
 F<int> = Fan setting
 T<long> = Thermostat time, in unix
 I<int: 0 or 1> = Option to use real feel temperature 
+B<float> = option to set bound
 S = Schedule, must be followed 1st by:
     H = Heat
     C = Cold
@@ -18,8 +19,9 @@ process by skipping the timeout
 
 Thermostat output only:
 e<int> = error code <int>
-C( <float: temp> <float: humidity> <float: heat_idx>)*NUM_TEMP_SENSORS
+C( <float: temp> <float: humidity> <float: heat_idx> <float: last_read_time>)*NUM_TEMP_SENSORS
 R <int:heat relay state> <int:ac relay state> <int:fan relay state>
+A<float> = target temperature
 
 ** NOTE: The parentheses used in format are only to aid with representation,
 they are not included when writing data to the serial.  For example, 

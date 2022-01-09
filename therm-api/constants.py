@@ -2,7 +2,14 @@ WEEKDAY_SCHEDULE_COOL = "weekdayScheduleCool"
 WEEKEND_SCHEDULE_COOL = "weekendScheduleCool"
 WEEKDAY_SCHEDULE_HEAT = "weekdayScheduleHeat"
 WEEKEND_SCHEDULE_HEAT = "weekendScheduleHeat"
-
+MODE = "mode"
+FAN_SETTING = "fanSetting"
+TIME = "time"
+START = "start"
+TEMP = "temp"
+TEMP_BOUND = "tempBound"
+USE_REAL_FEEL = "useRealFeel"
+TEMP_SET_POINT = "tempSetPoint"
 
 test_data = {
     "sensors": [

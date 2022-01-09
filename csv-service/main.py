@@ -26,8 +26,10 @@ def toCsv(lst):
 def get_fields():
     fields = []
     fields.append(TIME)
+    fields.append(ARDUINO_TIME)
     fields.append(THERMOSTAT_MODE)
     fields.append(FAN_SETTING)
+    fields.append(TEMP_SET_POINT)
     fields.append(HEATER_RELAY)
     fields.append(AC_RELAY)
     fields.append(FAN_RELAY)
@@ -35,6 +37,9 @@ def get_fields():
         fields.append(SENSOR_TEMP(i))
         fields.append(SENSOR_HUMIDITY(i))
         fields.append(SENSOR_HEAT_INDEX(i))
+        fields.append(SENSOR_LAST_READ(i))
+    fields.append(USE_REAL_FEEL)
+    fields.append(TEMPERATURE_BOUND)
     fields.append(OUTDOOR_TEMP)
     fields.append(OUTDOOR_REAL_FEEL)
     fields.append(OUTDOOR_HUMIDITY)
@@ -72,12 +77,17 @@ while True:
             log_entry[HEATER_RELAY] = (getPowerState[arduino_data.get("heatRelay")])
             log_entry[AC_RELAY] = (getPowerState[arduino_data.get("acRelay")])
             log_entry[FAN_RELAY] = (getPowerState[arduino_data.get("fanRelay")])
+            log_entry[TEMPERATURE_BOUND] = (getPowerState[arduino_data.get("tempBound")])
+            log_entry[ARDUINO_TIME] = (getPowerState[arduino_data.get("time")])
+            log_entry[USE_REAL_FEEL] = (getPowerState[arduino_data.get("useRealFeel")])
+            log_entry[TEMP_SET_POINT] = (getPowerState[arduino_data.get("tempSetPoint")])
             sensor_data = arduino_data.get("sensors")
             i = 0
             for sensor_obj in sensor_data:
-                log_entry[SENSOR_TEMP(i)] = (sensor_obj.get("temperature"))
-                log_entry[SENSOR_HUMIDITY(i)] = (sensor_obj.get("humidity"))
-                log_entry[SENSOR_HEAT_INDEX(i)] = (sensor_obj.get("heat_idx"))
+                log_entry[SENSOR_TEMP(i)] = sensor_obj.get("temperature")
+                log_entry[SENSOR_HUMIDITY(i)] = sensor_obj.get("humidity")
+                log_entry[SENSOR_HEAT_INDEX(i)] = sensor_obj.get("heat_idx")
+                log_entry[SENSOR_LAST_READ(i)] = sensor_obj.get("last_read_time")
                 i += 1
         else:
             error_message = f"Error with arduino api request, status code {arduino_request.status_code}"

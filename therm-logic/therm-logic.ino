@@ -262,6 +262,8 @@ void loop() {
     Serial.write("M");
     Serial.print(thermostat_state);
 
+    Serial.write("A");
+    Serial.print(target, 2);
     // Print out the fan setting mode 
     Serial.write("F");
     Serial.print(fan_setting);

@@ -47,9 +47,11 @@ if not test_mode:
 
     def ping_arduino(send_data):
         signal_chars = {
-            "mode": 'M',
-            "fanSetting": 'F',
-            "time": 'T',
+            MODE: 'M',
+            FAN_SETTING: 'F',
+            TEMP_BOUND: "B",
+            TIME: 'T',
+            USE_REAL_FEEL: "I",
             WEEKDAY_SCHEDULE_COOL: 'SCD',
             WEEKEND_SCHEDULE_COOL: 'SCE',
             WEEKDAY_SCHEDULE_HEAT: 'SHD',
@@ -61,23 +63,29 @@ if not test_mode:
             
         for key, value in send_data.items():
             if key in signal_chars:
-                if key == "mode":
+                if key == MODE:
                     serial_print(signal_chars[key])
                     serial_print(value)
-                elif key == "fanSetting":
+                elif key == FAN_SETTING:
                     serial_print(signal_chars[key])
                     serial_print(value)
-                elif key == "time" and value == True:
+                elif key == TIME and value == True:
                     serial_print(signal_chars[key])
                     serial_print(int(time.time()) - 18000)
+                elif key == TEMP_BOUND:
+                    serial_print(signal_chars[key])
+                    serial_print(value)
+                elif key == USE_REAL_FEEL:
+                    serial_print(signal_chars[key])
+                    serial_print(value)
                 else:
                     N = len(value)
                     serial_print(signal_chars[key])
                     for i in range(N):
                         serial_print(' ')
-                        serial_print("{:.2f}".format(value[i]["start"]))
+                        serial_print("{:.2f}".format(value[i][START]))
                         serial_print(' ')
-                        serial_print("{:.2f}".format(value[i]["temp"]))
+                        serial_print("{:.2f}".format(value[i][TEMP]))
                     # TODO: write null for the remaining 4 temperatures if they don't exist
         serial_print("*") # Marks the end of transmission to arduino
 
@@ -101,9 +109,15 @@ if not test_mode:
                     sensorObj["humidity"] = (humidity)
                     heat_idx, result = parseFloat(result)
                     sensorObj["heat_idx"] = (heat_idx)
-                    last_read_time, result = parseFloat(result)
+                    last_read_time, result = parseInt(result)
                     sensorObj["last_read_time"] = last_read_time
                     response["sensors"].append(sensorObj)
+            elif char == "I":
+                use_real_feel, result = parseInt(result)
+                response[USE_REAL_FEEL] = use_real_feel
+            elif char == "B":
+                temp_bound, result = parseFloat(result)
+                response[TEMP_BOUND] = temp_bound
             elif char == "R":
                 heatRelay, result = parseInt(result)
                 response["heatRelay"] = heatRelay
@@ -113,13 +127,16 @@ if not test_mode:
                 response["fanRelay"] = fanRelay
             elif char == "M":
                 mode, result = parseInt(result)
-                response["mode"] = mode
+                response[MODE] = mode
+            elif char == "A":
+                temp_set_point, result = parseFloat(result)
+                response[TEMP_SET_POINT] = temp_set_point
             elif char == "F":
                 fanSetting, result = parseInt(result)
                 response["fanSetting"] = fanSetting
             elif char == "T":
                 arduino_time, result = parseInt(result)
-                response["time"] = arduino_time
+                response[TIME] = arduino_time
             elif char == "S":
                 char2 = result[1]
                 char3 = result[2]
@@ -130,8 +147,8 @@ if not test_mode:
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
                             response[WEEKDAY_SCHEDULE_COOL].append({
-                                "start": start,
-                                "temp": temp
+                                START: start,
+                                TEMP: temp
                             })
                     elif char3 == "E":
                         response[WEEKEND_SCHEDULE_COOL] = []
@@ -139,8 +156,8 @@ if not test_mode:
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
                             response[WEEKEND_SCHEDULE_COOL].append({
-                                "start": start,
-                                "temp": temp
+                                START: start,
+                                TEMP: temp
                             })
                     else:
                         raise Exception
@@ -151,8 +168,8 @@ if not test_mode:
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
                             response[WEEKDAY_SCHEDULE_HEAT].append({
-                                "start": start,
-                                "temp": temp
+                                START: start,
+                                TEMP: temp
                             })
                     elif char3 == "E":
                         response[WEEKEND_SCHEDULE_HEAT] = []
@@ -160,8 +177,8 @@ if not test_mode:
                             start, result = parseFloat(result)
                             temp, result = parseFloat(result)
                             response[WEEKEND_SCHEDULE_HEAT].append({
-                                "start": start,
-                                "temp": temp
+                                START: start,
+                                TEMP: temp
                             })
                     else:
                         raise Exception
