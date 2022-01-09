@@ -52,7 +52,7 @@ def log_fields(fields):
     logging.warning(toCsv(fields))
 
 fields = get_fields()
-# log_fields(fields)
+log_fields(fields)
 
 counter = 0
 while True:
