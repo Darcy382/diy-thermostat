@@ -130,7 +130,7 @@ void loop() {
   // Receiving data from all sensors
   digitalWrite(RADIO_LIGHT, HIGH);
   sensors_read.clear();
-  while ((sensors_read.count() < NUM_TEMP_SENSORS) && (Serial.available() == 0)) {
+  while ((sensors_read.count() < NUM_TEMP_SENSORS) && Serial.available() == 0) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
       if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
@@ -466,7 +466,7 @@ void loop() {
   int k = 0;
   while (Serial.available() == 0 and k < 20) {
     delay(50);
-    i++;
+    k++;
   }
 }
 
