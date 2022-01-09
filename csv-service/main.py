@@ -13,7 +13,7 @@ TIME_SYNC_PERIOD = 720
 logging.basicConfig(filename='thermostat_data.csv', filemode='w', format='%(message)s')
 
 def unix_to_excel_time(unix_time):
-    return ((unix_time-18000) / 86400) + 25569
+    return (unix_time / 86400) + 25569
 
 def kelvinToF(kelvinTemp):
     if kelvinTemp is None:
@@ -72,7 +72,7 @@ while True:
             weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}")
         else:
             weather_request = requests.get(f"https://api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}")
-        log_entry[TIME] = unix_to_excel_time(time.time())
+        log_entry[TIME] = unix_to_excel_time(time.time()-18000)
         if (arduino_request.status_code == 200):
             arduino_data = arduino_request.json()
             log_entry[THERMOSTAT_MODE] = getThermostatMode[arduino_data.get("mode")]
