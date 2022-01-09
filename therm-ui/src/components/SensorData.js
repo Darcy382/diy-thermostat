@@ -1,7 +1,6 @@
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import PropTypes from 'prop-types';
-import lodash from 'lodash';
 import React from 'react';
 import NotificationManager from 'react-notifications/lib/NotificationManager';
 import { Spinner } from 'react-bootstrap';
@@ -65,7 +64,7 @@ class SensorData extends React.Component {
           this.renderLoadingState() :
           this.renderDataState()
           }
-          <Button variant="primary" onClick={this.refreshData}>Refresh</Button>
+          <Button variant="primary" onClick={this.refreshData} disabled={this.state.isLoading}>Refresh</Button>
         </Card.Body>
       </Card>
     );

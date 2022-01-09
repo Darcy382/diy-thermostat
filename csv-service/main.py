@@ -112,7 +112,7 @@ while True:
             log_entry[ERROR_MESSAGES].append(error_message)
             print(error_message)
     except Exception as e:
-        error_message = "The following error has occurred: {e}"
+        error_message = f"The following error has occurred: {e}"
         log_entry[ERROR_MESSAGES].append(error_message)
         print(error_message)
         print(e)

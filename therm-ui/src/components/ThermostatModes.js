@@ -1,6 +1,5 @@
-import { set } from 'lodash';
 import React from 'react';
-import { ButtonGroup, Card, Col, Row, ToggleButton, ToggleButtonGroup } from 'react-bootstrap';
+import { ButtonGroup, Card, Col, Row, ToggleButton } from 'react-bootstrap';
 import NotificationManager from 'react-notifications/lib/NotificationManager';
 
 const thermModes = [
