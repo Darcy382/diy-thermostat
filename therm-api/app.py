@@ -102,7 +102,6 @@ if not test_mode:
                     heat_idx, result = parseFloat(result)
                     sensorObj["heat_idx"] = (heat_idx)
                     last_read_time, result = parseFloat(result)
-                    print(last_read_time)
                     sensorObj["last_read_time"] = last_read_time
                     response["sensors"].append(sensorObj)
             elif char == "R":
