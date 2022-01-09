@@ -4,6 +4,7 @@
 #include <TimeLib.h>
 #include <TM1637Display.h>
 #include <EEPROM.h>
+#include <set.h>
 
 #define FAN_PIN 4
 #define AC_PIN 3
@@ -22,8 +23,11 @@
 enum Thermostat_state_name { THERM_OFF=0, HEAT=1, COOL=2 };
 enum Fan_setting_name { AUTO=0, ALWAYS_ON=1};
 enum Power_state { OFF, ON };
-float bound = 1;
+float bound;
 const unsigned long DEFAULT_TIME = 1640897447;
+bool use_real_feel;
+
+Set sensors_read;
 
 RF24 radio(7, 8); // CE, CSN
 TM1637Display display = TM1637Display(CLK, DIO);
@@ -45,6 +49,13 @@ struct PayloadStruct {
 };
 PayloadStruct payload;
 
+struct SensorReading {
+  long time;
+  float temperature;
+  float humidity;
+  float heat_idx;
+};
+
 float schedule_wend_cool_start[MAX_SCHEDULED_EVENTS];
 float schedule_wend_cool_temp[MAX_SCHEDULED_EVENTS];
 
@@ -63,7 +74,7 @@ float target;
 float avg_temp;
 int eeAddress;
 
-PayloadStruct sensors[NUM_TEMP_SENSORS];
+SensorReading sensors[NUM_TEMP_SENSORS];
 bool received_all_temps;  
 
 void setup() {
@@ -72,11 +83,9 @@ void setup() {
   
   thermostat_state = THERM_OFF;
   fan_setting = AUTO;
-  target = 72;
-
-  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    sensors[i].nodeID = i;
-  }
+  target = 70;
+  bound = 1;
+  use_real_feel = false;
 
   pinMode(FAN_PIN, OUTPUT);
   pinMode(AC_PIN, OUTPUT);
@@ -119,27 +128,20 @@ void setup() {
 
 void loop() {
   // Receiving data from all sensors
-  for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    sensors[i].temperature = NULL;
-    sensors[i].humidity = NULL;
-    sensors[i].heat_idx = NULL;
-  }
   digitalWrite(RADIO_LIGHT, HIGH);
-  received_all_temps = false;
-  while (!received_all_temps) {
+  sensors_read.clear();
+  while ((sensors_read.count() < NUM_TEMP_SENSORS) && (Serial.available() == 0)) {
     if (radio.available()) {
       radio.read(&payload, sizeof(payload));
       if (0 <= payload.nodeID <= NUM_TEMP_SENSORS - 1) {
-        sensors[payload.nodeID] = payload;
+        sensors[payload.nodeID].temperature = payload.temperature;
+        sensors[payload.nodeID].humidity = payload.humidity;
+        sensors[payload.nodeID].heat_idx = payload.heat_idx;
+        sensors[payload.nodeID].time = now();
+        sensors_read.add(payload.nodeID);
       } else {
           digitalWrite(ERROR_LIGHT, HIGH);
           // An invalid nodeID has been received
-      }
-    }
-    received_all_temps = true;
-    for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-      if (sensors[i].temperature == NULL) {
-        received_all_temps = false;
       }
     }
   }
@@ -166,6 +168,9 @@ void loop() {
         break;
       case 'T':
         setTime(Serial.parseInt());
+        break;
+      case 'I':
+        use_real_feel = Serial.parseInt();
         break;
       case 'S':
         new_schedule = true;
@@ -259,6 +264,8 @@ void loop() {
     Serial.write("F");
     Serial.print(fan_setting);
 
+    Serial.write("I");
+    Serial.print(use_real_feel);
     // Print out the current time
     Serial.write("T");
     Serial.print(now());
@@ -357,10 +364,32 @@ void loop() {
 
   // Calculating average temperature
   float sum = 0;
+  int sensors_used = 0;
   for (int i = 0; i < NUM_TEMP_SENSORS; i++) {
-    sum += sensors[i].temperature;
+    if ((now() - sensors[i].time) < 1200) {
+      if (use_real_feel) {
+        sum += sensors[i].heat_idx;  
+      } else {
+        sum += sensors[i].temperature;
+      }
+      sensors_used++;
+    }
   }
-  avg_temp = sum / NUM_TEMP_SENSORS;
+  if (sensors_used == 0) {
+    // If no temperature sensors are responding, turn everything off
+    if (ac_on()) {
+      turn_ac(OFF);
+    }
+    if (heater_on()) {
+      turn_heater(OFF);
+    }
+    if (fan_on()) {
+      turn_fan(OFF);
+    }
+    return;
+  }
+
+  avg_temp = sum / sensors_used;
 
   // Starting classical thermostat logic
   switch(thermostat_state) {
@@ -432,7 +461,11 @@ void loop() {
     break;
   }
 
-  delay(1000);
+  int i = 0;
+  while (Serial.available() == 0 and i < 20) {
+    delay(50);
+    i++;
+  }
 }
 
 void turn_fan(Power_state power_state) {

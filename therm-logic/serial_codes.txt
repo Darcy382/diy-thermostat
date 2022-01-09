@@ -2,7 +2,7 @@ Thermostat input and output:
 M<int> = Thermostat mode
 F<int> = Fan setting
 T<long> = Thermostat time, in unix
-
+I<int: 0 or 1> = Option to use real feel temperature 
 S = Schedule, must be followed 1st by:
     H = Heat
     C = Cold
