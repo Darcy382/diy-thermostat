@@ -461,8 +461,8 @@ void loop() {
     break;
   }
 
-  int i = 0;
-  while (Serial.available() == 0 and i < 20) {
+  int k = 0;
+  while (Serial.available() == 0 and k < 20) {
     delay(50);
     i++;
   }
