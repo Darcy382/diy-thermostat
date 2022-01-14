@@ -7,13 +7,14 @@ import { Spinner } from 'react-bootstrap';
 import "react-notifications/lib/notifications.css";
 import { NotificationContainer } from 'react-notifications';
 import AdvancedCard from './components/AdvancedCard';
+import {API_HOSTNAME} from './userSettings.js';
 
 class App extends React.Component {
   state = { data: null, isLoading: true, error: null };
 
   async componentDidMount() {
     try {
-      const response = await fetch('http://192.168.1.25:5000/thermostat/mode');
+      const response = await fetch(`http://${API_HOSTNAME}/thermostat/mode`);
       const data = await response.json();
       this.setState({ data: data, isLoading: false });
     } catch (error) {
@@ -32,7 +33,7 @@ class App extends React.Component {
         weekendScheduleHeat={this.state.data.weekendScheduleHeat}
       />
       <SensorData sensorData={this.state.data.sensors}/>
-      <AdvancedCard />
+      <AdvancedCard tempBound={this.state.data.tempBound} useRealFeel={this.state.data.useRealFeel}/>
       </>
     )
   }

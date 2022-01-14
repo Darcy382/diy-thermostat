@@ -1,6 +1,8 @@
 import React from 'react';
 import { ButtonGroup, Card, Col, Row, ToggleButton } from 'react-bootstrap';
 import NotificationManager from 'react-notifications/lib/NotificationManager';
+import { DEFAULT_NOTIFICATION_TIME } from '../constants';
+import { API_HOSTNAME } from '../userSettings';
 
 const thermModes = [
   { name: 'Heat', value: 1, buttonStyle: 'outline-danger'},
@@ -18,38 +20,39 @@ class ThermostatModes extends React.Component {
 
   // TODO: Figure out why this works and it is not in an arrow function
   async setThermostatMode(mode) {
+    this.setState({thermMode: mode})
     try {
       const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, "time": true })
+        body: JSON.stringify({ mode })
       };
-      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
+      const response = await fetch(`http://${API_HOSTNAME}/thermostat/mode`, requestOptions);
       const data = await response.json();
       this.setState({ thermMode: data.mode, isLoading: false });
-      NotificationManager.success("Success", "", 1000);
+      NotificationManager.success("Thermostat mode changed", "Success", DEFAULT_NOTIFICATION_TIME);
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
-      NotificationManager.error("Error", "", 1000);
+      NotificationManager.error(error.message, "Error", DEFAULT_NOTIFICATION_TIME);
 
     }
   }
 
-  async setFanSetting(setting) {
+  async setFanSetting(fanSetting) {
+    this.setState({fanSetting: fanSetting})
     try {
       const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 'fanSetting': setting })
+        body: JSON.stringify({ fanSetting })
       };
-      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
+      const response = await fetch(`http://${API_HOSTNAME}/thermostat/mode`, requestOptions);
       const data = await response.json();
       this.setState({ fanSetting: data.fanSetting, isLoading: false });
-      NotificationManager.success("Success", "", 1000);
+      NotificationManager.success("Fan setting updated", "Success", DEFAULT_NOTIFICATION_TIME);
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
-      NotificationManager.error("Error", "", 1000);
-
+      NotificationManager.error(error.message, "Error", DEFAULT_NOTIFICATION_TIME);
     }
   }
   
@@ -73,8 +76,7 @@ class ThermostatModes extends React.Component {
                 value={radio.value}
                 checked={this.state.thermMode === radio.value}
                 onChange={(e) => {
-                  this.setState({thermMode: parseInt(e.currentTarget.value)})
-                  this.setThermostatMode(e.currentTarget.value)
+                  this.setThermostatMode(parseInt(e.currentTarget.value))
                 }}
               >
                 {radio.name}
@@ -96,8 +98,7 @@ class ThermostatModes extends React.Component {
                 value={radio.value}
                 checked={this.state.fanSetting === radio.value}
                 onChange={(e) => {
-                  this.setState({fanSetting: parseInt(e.currentTarget.value)})
-                  this.setFanSetting(e.currentTarget.value)
+                  this.setFanSetting(parseInt(e.currentTarget.value))
                 }}
               >
                 {radio.name}

@@ -48,7 +48,7 @@ class ScheduleList extends React.Component {
                 <Form.Control type="time" step={900} onChange={(event) => this.props.updateTime(this.props.scheduleType, index, timeToHours(event.target.value))} value={hoursToTime(event.start)}/>
                 </Col>
                 <Col>
-                <Form.Control type="number" pattern="\d*" onChange={(event) => this.props.updateTemp(this.props.scheduleType, index, parseFloat(event.target.value))} value={event.temp} />
+                <Form.Control type="number" inputMode="decimal" onChange={(event) => this.props.updateTemp(this.props.scheduleType, index, parseFloat(event.target.value))} value={event.temp} />
                 </Col>
               </Row>
               <br />

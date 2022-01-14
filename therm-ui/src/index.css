@@ -20,6 +20,7 @@ code {
 .main {
   width: 90vw;
   margin-top: 30px;
+  max-width: 700px;
 }
 
 .card {
@@ -34,9 +35,19 @@ code {
   margin: 10px;
 }
 
+.SettingRow {
+  margin-bottom: 20px;
+}
 
 /* Fix the below as per: https://ricardozea.medium.com/how-to-remove-the-blue-border-outline-in-chrome-safari-and-dotted-line-in-firefox-edge-fe5e2155d44c */
 a { 
+  border:0; 
+  outline:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+}
+
+input {
   border:0; 
   outline:none;
   -webkit-appearance:none;

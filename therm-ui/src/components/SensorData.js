@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import NotificationManager from 'react-notifications/lib/NotificationManager';
 import { Spinner } from 'react-bootstrap';
+import { API_HOSTNAME } from '../userSettings';
 
 class SensorData extends React.Component {
 
@@ -12,7 +13,7 @@ class SensorData extends React.Component {
   refreshData = async () => {
     this.setState({isLoading: true});
     try {
-      const response = await fetch('http://192.168.1.25:5000/thermostat/mode');
+      const response = await fetch(`http://${API_HOSTNAME}/thermostat/mode`);
       const data = await response.json();
       this.setState({ 
         sensorData: data.sensors,

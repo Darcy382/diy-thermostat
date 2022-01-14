@@ -15,11 +15,15 @@ CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 app.config["CSV_SERVICE"] = path
 
+def floatToString(num):
+    return "{:.2f}".format(num)
+
 if not test_mode: 
     arduino = serial.Serial(port='/dev/cu.usbmodem14201', baudrate=9600, timeout=.1)
 
     def serial_print(string):
         encoded = str(string).encode('utf-8')
+        print(encoded, end="")
         arduino.write(encoded)
 
     def serial_read():
@@ -74,7 +78,7 @@ if not test_mode:
                     serial_print(int(time.time()) - 18000)
                 elif key == TEMP_BOUND:
                     serial_print(signal_chars[key])
-                    serial_print(value)
+                    serial_print(floatToString(value))
                 elif key == USE_REAL_FEEL:
                     serial_print(signal_chars[key])
                     serial_print(value)
@@ -83,12 +87,13 @@ if not test_mode:
                     serial_print(signal_chars[key])
                     for i in range(N):
                         serial_print(' ')
-                        serial_print("{:.2f}".format(value[i][START]))
+                        serial_print(floatToString(value[i][START]))
                         serial_print(' ')
-                        serial_print("{:.2f}".format(value[i][TEMP]))
+                        serial_print(floatToString(value[i][TEMP]))
                     # TODO: write null for the remaining 4 temperatures if they don't exist
         serial_print("*") # Marks the end of transmission to arduino
 
+        print() # Prints a newline after print what was sent to the arduino
         while arduino.in_waiting == 0: 
             pass
 
@@ -202,7 +207,7 @@ def set_therm_mode():
     if not test_mode:
         return ping_arduino({})
     else:
-        time.sleep(1)
+        time.sleep(0.5)
         return app.response_class(
             json.dumps(test_data),
             mimetype='applications/json'
@@ -215,7 +220,10 @@ def get_therm_mode():
     if not test_mode:
         return ping_arduino(request.json)
     else:
-        time.sleep(1)
+        time.sleep(0.5)
+        print(request.json)
+        for key, value in request.json.items():
+            test_data[key] = value
         return app.response_class(
             json.dumps(test_data),
             mimetype='applications/json'
@@ -227,4 +235,7 @@ def getSensorLogging():
 
 
 if __name__ == "__main__":
-    app.run(host=host_ip, threaded=False)
+    if host_ip is None:
+        app.run(threaded=False)
+    else: 
+        app.run(host=host_ip, threaded=False)

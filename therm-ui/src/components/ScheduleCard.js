@@ -1,7 +1,8 @@
 import React from "react";
 import { Button, Card, Nav, Spinner } from "react-bootstrap";
 import NotificationManager from "react-notifications/lib/NotificationManager";
-import { WEEKDAY_SCHEDULE_HEAT, WEEKEND_SCHEDULE_HEAT, WEEKDAY_SCHEDULE_COOL, WEEKEND_SCHEDULE_COOL } from "./constants";
+import { WEEKDAY_SCHEDULE_HEAT, WEEKEND_SCHEDULE_HEAT, WEEKDAY_SCHEDULE_COOL, WEEKEND_SCHEDULE_COOL, DEFAULT_NOTIFICATION_TIME } from "../constants";
+import { API_HOSTNAME } from "../userSettings";
 import ScheduleList from "./ScheduleList";
 
 class ScheduleCard extends React.Component {
@@ -46,10 +47,9 @@ class ScheduleCard extends React.Component {
           weekendScheduleHeat: this.state.weekendScheduleHeat,
           weekdayScheduleCool: this.state.weekdayScheduleCool,
           weekendScheduleCool: this.state.weekendScheduleCool,
-          "time": true 
         })
       };
-      const response = await fetch('http://192.168.1.25:5000/thermostat/mode', requestOptions);
+      const response = await fetch(`http://${API_HOSTNAME}/thermostat/mode`, requestOptions);
       const data = await response.json();
       this.setState({ 
         weekdayScheduleHeat: data.weekdayScheduleHeat, 
@@ -58,10 +58,10 @@ class ScheduleCard extends React.Component {
         weekendScheduleCool: data.weekendScheduleCool,
         isLoading: false 
       });
-      NotificationManager.success("Success", "", 1000);
+      NotificationManager.success("New schedule uploaded", "Success", DEFAULT_NOTIFICATION_TIME);
     } catch (error) {
       this.setState({ error: error.message, isLoading: false });
-      NotificationManager.error("Success", "", 1000);
+      NotificationManager.error(error.message, "Error", DEFAULT_NOTIFICATION_TIME);
     }
   }
   
@@ -97,7 +97,7 @@ class ScheduleCard extends React.Component {
         <ScheduleList title="Weekday" schedule={weekday} updateTime={this.updateTime} updateTemp={this.updateTemp} scheduleType={weekdayType}/>
         <ScheduleList title="Weekend" schedule={weekend} updateTime={this.updateTime} updateTemp={this.updateTemp} scheduleType={weekendType}/>
         {this.state.isLoading ? (
-        <Button variant="outline-secondary" disabled>
+        <Button variant="outline-secondary">
           <Spinner animation="border" size="sm" /> <span> Loading...</span>
         </Button>) :
         (<Button onClick={this.sendSchedule} variant="success">

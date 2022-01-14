@@ -13,7 +13,7 @@ ERROR_MESSAGES = "error_messages"
 TEMP_SET_POINT = "temp_set_point"
 USE_REAL_FEEL = "use_real_feel"
 ARDUINO_TIME = "arduino_time"
-TEMPERATURE_BOUND = "temperature_bound"
+TEMPERATURE_BOUND = "temp_bound"
 
 
 def SENSOR_TEMP(sensor_num):

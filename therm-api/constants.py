@@ -14,22 +14,27 @@ TEMP_SET_POINT = "tempSetPoint"
 test_data = {
     "sensors": [
         {
-            "temperature": 67.82,
-            "humidity": 40.0,
-            "heat_idx": 66.18
+            "temperature": 70.34,
+            "humidity": 44.0,
+            "heat_idx": 69.14,
+            "last_read_time": 1642080326
         },
         {
             "temperature": 69.26,
-            "humidity": 41.0,
-            "heat_idx": 67.81
+            "humidity": 40.0,
+            "heat_idx": 67.77,
+            "last_read_time": 1642080326
         }
     ],
     "heatRelay": 0,
     "acRelay": 0,
     "fanRelay": 0,
     "mode": 1,
+    "tempSetPoint": 70.0,
     "fanSetting": 0,
-    "time": 1641581769,
+    "useRealFeel": 0,
+    "tempBound": 0.5,
+    "time": 1642080326,
     "weekdayScheduleCool": [
         {
             "start": 1.0,
@@ -69,11 +74,11 @@ test_data = {
     "weekdayScheduleHeat": [
         {
             "start": 6.5,
-            "temp": 68.0
+            "temp": 70.0
         },
         {
             "start": 12.02,
-            "temp": 68.0
+            "temp": 70.0
         },
         {
             "start": 21.52,
@@ -87,15 +92,15 @@ test_data = {
     "weekendScheduleHeat": [
         {
             "start": 7.0,
-            "temp": 68.0
+            "temp": 70.0
         },
         {
             "start": 10.0,
-            "temp": 68.0
+            "temp": 70.0
         },
         {
             "start": 14.0,
-            "temp": 68.0
+            "temp": 70.0
         },
         {
             "start": 22.0,
