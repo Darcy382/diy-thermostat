@@ -10,7 +10,7 @@ ARDUINO_API_URL = "/thermostat/mode"
 ADVANCED_WEATHER_PERIOD = 15
 TIME_SYNC_PERIOD = 720
 
-logging.basicConfig(filename='thermostat_data.csv', filemode='w', format='%(message)s')
+logging.basicConfig(filename='thermostat_data.csv', filemode='a', format='%(message)s')
 
 def unix_to_excel_time(unix_time):
     return (unix_time / 86400) + 25569
@@ -55,7 +55,7 @@ def log_fields(fields):
     logging.warning(toCsv(fields))
 
 fields = get_fields()
-log_fields(fields)
+# log_fields(fields)
 
 counter = 0
 while True:
