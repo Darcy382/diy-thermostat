@@ -1,5 +1,6 @@
 # DIY Thermostat
-DIY Home Thermostat using arduinos and wireless temperature/humidity sensors.  Built a feature packed thermostat for my parents’ house using Arduinos and NF24 transceivers for wireless temperature sensors
+DIY Home Thermostat using arduinos and wireless temperature/humidity sensors.  
+* Built a feature packed thermostat for my parents’ house using Arduinos and NF24 transceivers for wireless temperature sensors
 * Created a React JS mobile site to operate the HVAC, set a schedule for the DIY thermostat, and download historical temp data
 * Used a REST API server on the backend to receive mobile requests and control Arduino through a serial interface
 
