@@ -179,6 +179,7 @@ void loop() {
         new_schedule = true;
         char header2;
         char header3;
+        // This is where I think that the arduino is stuck, also, look into how the error light turned on
         while (Serial.available() < 2) {}
         header2 = Serial.read();
         header3 = Serial.read();
